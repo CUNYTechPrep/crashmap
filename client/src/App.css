@@ -1,0 +1,4 @@
+#hero {
+  height: 650px;
+  /* overflow: hidden;  <- TODO fix overflow issue in mapbox container */
+}
