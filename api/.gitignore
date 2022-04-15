@@ -1,0 +1,11 @@
+# Dependencies
+/venv
+
+# Testing
+/coverage
+
+# Miscelaneous
+__pycache__
+
+# IDE
+/.idea
