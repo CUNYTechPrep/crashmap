@@ -18,7 +18,7 @@ WORKDIR /app/api
 RUN pip install -r requirements.txt
 ENV FLASK_ENV production
 
-EXPOSE 8080/tcp
+ENV PORT 8080
+EXPOSE $PORT/tcp
 WORKDIR /app/api
-CMD ["gunicorn", "-b", ":8080", "main:flask_app"]
-
+CMD gunicorn -b :${PORT} main:flask_app
