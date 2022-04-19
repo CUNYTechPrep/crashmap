@@ -1,3 +1,4 @@
+from os import getenv
 from flask import Flask, jsonify, request, Response
 from werkzeug.exceptions import HTTPException
 from werkzeug.urls import url_parse
@@ -48,4 +49,4 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 flask_app = create_app()
 
 if __name__ == '__main__':
-    flask_app.run(debug=True)
+    flask_app.run(debug=(getenv('FLASK_ENV') == 'development'))
