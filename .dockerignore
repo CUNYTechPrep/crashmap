@@ -2,7 +2,7 @@
 /api/venv
 /client/node_modules
 /client/.pnp
-/client/.pnp.js
+/cient/.pnp.js
 
 # Testing
 /api/coverage
@@ -11,17 +11,17 @@
 /client/build
 
 # Miscelaneous
-__pycache__
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+/api/__pycache__
+/client/.DS_Store
+/client/.env.local
+/client/.env.development.local
+/client/.env.test.local
+/client/.env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+/client/npm-debug.log*
+/client/yarn-debug.log*
+/client/yarn-error.log*
 
 # IDE
-/api/.idea
-/client/.idea
+*/.idea
+*/.idea
