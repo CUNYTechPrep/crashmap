@@ -12,6 +12,9 @@
 
 # Miscelaneous
 /api/__pycache__
+/api/requirements
+!/api/requirements/production.txt
+/api/requirements.txt
 /client/.DS_Store
 /client/.env.local
 /client/.env.development.local

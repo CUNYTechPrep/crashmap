@@ -15,7 +15,7 @@ COPY --from=build-react /app/client/build ./client/build
 
 COPY ./api ./api
 WORKDIR /app/api
-RUN pip install -r requirements.txt
+RUN pip install -r requirements/production.txt
 ENV FLASK_ENV production
 
 ENV PORT 8080
