@@ -36,13 +36,16 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 
     @app.route('/api/summary', methods=['GET'])
     def suggestion() -> Response:
-        return None  # TODO: Return actual results.
+        return 'This is a summy summary.'  # TODO: Return actual results.
 
     @app.route('/api/details', methods=['GET'])
     def details() -> Response:
-        return None  # TODO: Return actual results.
+        return 'These are detailed details.'  # TODO: Return actual results.
 
     return app
 
 
 flask_app = create_app()
+
+if __name__ == '__main__':
+    flask_app.run()
