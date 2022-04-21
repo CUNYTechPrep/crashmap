@@ -1,0 +1,5 @@
+# Miscellaneous
+/sql/*.csv
+
+# IDE
+/.idea

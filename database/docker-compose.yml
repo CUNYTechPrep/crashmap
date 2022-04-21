@@ -1,0 +1,33 @@
+version: "3.2"
+
+services:
+
+  postgres:
+    image: postgis/postgis:14-master
+    container_name: crashmap-development-postgres
+    volumes:
+      - ${PWD}/sql:/docker-entrypoint-initdb.d
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: crashmap-development-pgadmin
+    volumes:
+      - ${PWD}/servers.json:/pgadmin4/servers.json
+    ports:
+      - 8000:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=someone@example.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+

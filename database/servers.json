@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "crashmap-development-postgres",
+            "Group": "Servers",
+            "Port": 5432,
+            "Username": "postgres",
+            "Host": "crashmap-development-postgres",
+            "SSLMode": "prefer",
+            "MaintenanceDB": "postgres"
+        }
+    }
+}
