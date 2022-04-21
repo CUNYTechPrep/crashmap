@@ -37,7 +37,7 @@ class Map extends Component {
 
       map.addLayer({
         id: 'boroughs-viz',
-        type: 'fill',
+        type: 'line',
         source: 'nyc-boroughs',
         paint: {
           'line-color': [
