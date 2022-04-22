@@ -1,0 +1,15 @@
+version: "3.3"
+
+services:
+
+  app:
+    hostname: ${APP_HOST?err}
+    container_name: crashmap-app
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+      args:
+        - APP_ENVIRONMENT=${APP_ENVIRONMENT?err}
+        - APP_PORT=${APP_PORT?err}
+    ports:
+      - "${APP_PORT?err}:${APP_PORT?err}"

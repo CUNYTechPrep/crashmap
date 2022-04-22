@@ -1,11 +1,11 @@
 -- Enable PostGIS.
-CREATE EXTENSION postgis;
+--CREATE EXTENSION postgis;
 
 -- Enable PostGIS raster support.
-CREATE EXTENSION postgis_raster;
+--CREATE EXTENSION postgis_raster;
 
 -- Enable PostGIS topology support.
-CREATE EXTENSION postgis_topology;
+--CREATE EXTENSION postgis_topology;
 
 -- Create tables.
 CREATE TABLE IF NOT EXISTS boro (
@@ -90,6 +90,9 @@ CREATE TABLE IF NOT EXISTS person
     CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(collision_id)--,
     --CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(unique_id)
 );
+
+-- Create views.
+
 
 -- Create indices.
 CREATE INDEX idx_boro_the_geom ON boro USING gist (the_geom);
