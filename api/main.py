@@ -1,4 +1,4 @@
-from os import getenv
+from os import environ, getenv
 from flask import Flask, jsonify, request, Response
 from werkzeug.exceptions import HTTPException
 from werkzeug.urls import url_parse
@@ -42,6 +42,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     @app.route('/api/details', methods=['GET'])
     def details() -> Response:
         return 'These are detailed details.'  # TODO: Return actual results.
+
+    @app.route('/api/environment', methods=['GET'])
+    def environment() -> Response:
+        return jsonify(dict(environ))
 
     return app
 
