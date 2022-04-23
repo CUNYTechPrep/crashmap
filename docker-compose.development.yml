@@ -13,6 +13,7 @@ services:
       context: .
       dockerfile: database.Dockerfile
       args:
+        - DOCKER_POSTGIS_TAG=${DOCKER_POSTGIS_TAG?-err}
         - DATABASE_PORT=${DATABASE_PORT?-err}
         - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
         - DATABASE_PASSWORD=${DATABASE_PASSWORD?-err}
@@ -24,6 +25,7 @@ services:
       context: .
       dockerfile: pgadmin.Dockerfile
       args:
+        - DOCKER_PGADMIN_TAG=${DOCKER_PGADMIN_TAG?-err}
         - PGADMIN_USERNAME=${PGADMIN_USERNAME?-err}
         - PGADMIN_PASSWORD=${PGADMIN_PASSWORD?-err}
         - DATABASE_HOST=${DATABASE_HOST?-err}

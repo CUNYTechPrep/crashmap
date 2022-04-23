@@ -1,5 +1,7 @@
+ARG DOCKER_PGADMIN_TAG
+
 # Initialize the database.
-FROM dpage/pgadmin4:6.8
+FROM dpage/pgadmin4:${DOCKER_PGADMIN_TAG?-err}
 ARG PGADMIN_USERNAME
 ARG PGADMIN_PASSWORD
 ARG DATABASE_HOST
