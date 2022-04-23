@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+
+  app:
+    hostname: ${APP_HOST?-err}
+    container_name: crashmap-app
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+      args:
+        - APP_ENVIRONMENT=${APP_ENVIRONMENT?-err}
+        - APP_PORT=${APP_PORT?-err}
+        - DATABASE_HOST=${DATABASE_HOST?-err}
+        - DATABASE_PORT=${DATABASE_PORT?-err}
+        - DATABASE_NAME=${DATABASE_NAME?-err}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
+        - DATABASE_PASSWORD=${DATABASE_PASSWORD?-err}
+    ports:
+      - "${APP_PORT?-err}:80"

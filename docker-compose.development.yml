@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+
+  app:
+    depends_on:
+      - database
+
+  database:
+    hostname: ${DATABASE_HOST?-err}
+    container_name: crashmap-database
+    build:
+      context: .
+      dockerfile: database.Dockerfile
+      args:
+        - DATABASE_PORT=${DATABASE_PORT?-err}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
+        - DATABASE_PASSWORD=${DATABASE_PASSWORD?-err}
+        - DATABASE_NAME=${DATABASE_NAME?-err}
+
+  pgadmin:
+    container_name: crashmap-pgadmin
+    build:
+      context: .
+      dockerfile: pgadmin.Dockerfile
+      args:
+        - PGADMIN_USERNAME=${PGADMIN_USERNAME?-err}
+        - PGADMIN_PASSWORD=${PGADMIN_PASSWORD?-err}
+        - DATABASE_HOST=${DATABASE_HOST?-err}
+        - DATABASE_PORT=${DATABASE_PORT?-err}
+        - DATABASE_NAME=${DATABASE_NAME?-err}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
+    ports:
+      - "${PGADMIN_PORT?-err}:80"
+    depends_on:
+      - database
