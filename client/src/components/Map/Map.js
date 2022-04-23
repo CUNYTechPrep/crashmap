@@ -6,8 +6,7 @@ import Row from 'react-bootstrap/Row';
 
 import boroughs from './data/borough_boundaries.geojson';
 
-mapboxgl.accessToken =
-  'pk.eyJ1Ijoic2VhbnlhcCIsImEiOiJjbDFmZnJjaHoxMTJ6M29zOXRoajZ0czlvIn0.BJC-KwTeHSCklDlBG9SEuQ';
+mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 class Map extends Component {
   constructor(props) {
