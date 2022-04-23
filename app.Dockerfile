@@ -1,5 +1,8 @@
+ARG DOCKER_NODE_TAG
+ARG DOCKER_PYTHON_TAG
+
 # Build the React front end.
-FROM node:18-alpine as build-react
+FROM node:${DOCKER_NODE_TAG?-err} as build-react
 ARG APP_ENVIRONMENT
 ARG APP_PORT
 ARG DATABASE_HOST
@@ -23,7 +26,7 @@ COPY ./client/public ./public
 RUN npm run build
 
 # Build the API with the client as static files.
-FROM python:3.10.4-slim
+FROM python:${DOCKER_PYTHON_TAG?-err}
 ARG APP_ENVIRONMENT
 ARG APP_PORT
 ARG DATABASE_HOST

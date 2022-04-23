@@ -1,5 +1,7 @@
+ARG DOCKER_POSTGIS_TAG
+
 # Initialize the database.
-FROM postgis/postgis:14-master as initializer
+FROM postgis/postgis:${DOCKER_POSTGIS_TAG?-err} as initializer
 ARG DATABASE_USERNAME
 ARG DATABASE_PASSWORD
 ARG DATABASE_NAME
@@ -16,7 +18,7 @@ RUN ["sed", "-i", "s/exec \"$@\"/echo \"Skipping...\"/", "/usr/local/bin/docker-
 RUN ["/usr/local/bin/docker-entrypoint.sh", "postgres"]
 
 # Copy the data without the SQL sources.
-FROM postgis/postgis:14-master
+FROM postgis/postgis:${DOCKER_POSTGIS_TAG?-err}
 ARG DATABASE_PORT
 ARG DATABASE_USERNAME
 ARG DATABASE_PASSWORD

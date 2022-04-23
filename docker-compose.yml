@@ -9,6 +9,8 @@ services:
       context: .
       dockerfile: app.Dockerfile
       args:
+        - DOCKER_NODE_TAG=${DOCKER_NODE_TAG?-err}
+        - DOCKER_PYTHON_TAG=${DOCKER_PYTHON_TAG?-err}
         - APP_ENVIRONMENT=${APP_ENVIRONMENT?-err}
         - APP_PORT=${APP_PORT?-err}
         - DATABASE_HOST=${DATABASE_HOST?-err}
