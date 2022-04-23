@@ -3,11 +3,11 @@ FROM postgis/postgis:14-master as initializer
 ARG DATABASE_USERNAME
 ARG DATABASE_PASSWORD
 ARG DATABASE_NAME
-ENV POSTGRES_USER=$DATABASE_USERNAME
-ENV POSTGRES_PASSWORD=$DATABASE_PASSWORD
-ENV POSTGRES_DB=$DATABASE_NAME
+ENV POSTGRES_USER=${DATABASE_USERNAME?-err}
+ENV POSTGRES_PASSWORD=${DATABASE_PASSWORD?-err}
+ENV POSTGRES_DB=${DATABASE_NAME?-err}
 ENV PGDATA /data
-COPY /sql /docker-entrypoint-initdb.d
+COPY /database/sql /docker-entrypoint-initdb.d
 WORKDIR /docker-entrypoint-initdb.d
 RUN ["apt", "update"]
 RUN ["apt", "install", "zpaq"]
@@ -18,4 +18,10 @@ RUN ["/usr/local/bin/docker-entrypoint.sh", "postgres"]
 # Copy the data without the SQL sources.
 FROM postgis/postgis:14-master
 ARG DATABASE_PORT
+ARG DATABASE_USERNAME
+ARG DATABASE_PASSWORD
+ARG DATABASE_NAME
+ENV POSTGRES_USER=${DATABASE_USERNAME?-err}
+ENV POSTGRES_PASSWORD=${DATABASE_PASSWORD?-err}
+ENV POSTGRES_DB=${DATABASE_NAME?-err}
 COPY --from=initializer /data $PGDATA
