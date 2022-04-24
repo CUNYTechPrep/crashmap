@@ -18,14 +18,8 @@ docker-compose.*.yml
 /client/build
 
 # Miscelaneous
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 **/.DS_Store
 /api/__pycache__
-/api/requirements
-!/api/requirements/production.txt
 /api/requirements.txt
 
 /client/npm-debug.log*
