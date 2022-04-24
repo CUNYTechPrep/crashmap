@@ -1,7 +1,13 @@
 from os import environ, getenv
-from flask import Flask, jsonify, request, Response
+from typing import Any, Optional
+
+from flask import Flask, json, jsonify, request, Response
+from geoalchemy2 import func
 from werkzeug.exceptions import HTTPException
 from werkzeug.urls import url_parse
+
+from models import db, BoroModel
+
 # Import services here.
 
 
@@ -9,6 +15,16 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     app = Flask(__name__,
                 static_folder='../client/build',  # The React app is served from this local path.
                 static_url_path='/')
+
+    DATABASE_SCHEME = getenv('DATABASE_SCHEME')
+    DATABASE_HOST = getenv('DATABASE_HOST')
+    DATABASE_PORT = getenv('DATABASE_PORT')
+    DATABASE_USERNAME = getenv('DATABASE_USERNAME')
+    DATABASE_PASSWORD = getenv('DATABASE_PASSWORD')
+    DATABASE_NAME = getenv('DATABASE_NAME')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'{DATABASE_SCHEME}://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db.init_app(app)
 
     # TODO: Initialize services here.
 
@@ -34,6 +50,15 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     @app.route('/')
     def index() -> Response:
         return app.send_static_file('index.html')
+
+    @app.route('/api/boro.geojson', methods=['GET'])
+    def boro() -> Any:
+        boro_code = request.args.get('boro_code', None, int)
+        query = db.session.query(func.ST_AsGeoJSON(BoroModel))
+        if boro_code != None:
+            query = query.filter(BoroModel.boro_code == boro_code)
+        return {"type": "FeatureCollection",
+                "features": [json.loads(boro[0]) for boro in query.all()]}
 
     @app.route('/api/summary', methods=['GET'])
     def suggestion() -> Response:
