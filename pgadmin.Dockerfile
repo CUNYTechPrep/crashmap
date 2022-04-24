@@ -1,15 +1,15 @@
 ARG DOCKER_PGADMIN_TAG
 
 # Initialize the database.
-FROM dpage/pgadmin4:${DOCKER_PGADMIN_TAG?-err}
+FROM dpage/pgadmin4:${DOCKER_PGADMIN_TAG?-}
 ARG PGADMIN_USERNAME
 ARG PGADMIN_PASSWORD
-ARG DATABASE_HOST
-ARG DATABASE_PORT
+ARG DATABASE_HOST_DOCKER
+ARG DATABASE_PORT_DOCKER
 ARG DATABASE_NAME
 ARG DATABASE_USERNAME
-ENV PGADMIN_DEFAULT_EMAIL=${PGADMIN_USERNAME?-err}
-ENV PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD?-err}
+ENV PGADMIN_DEFAULT_EMAIL=${PGADMIN_USERNAME?-}
+ENV PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD?-}
 USER root
-RUN echo {\"Servers\":{\"1\":{\"Name\":\"${DATABASE_NAME?-err}\",\"Group\":\"Servers\",\"Port\":${DATABASE_PORT?-err},\"Username\": \"${DATABASE_USERNAME?-err}\",\"Host\":\"${DATABASE_HOST?-err}\",\"SSLMode\":\"prefer\",\"MaintenanceDB\":\"${DATABASE_NAME?-err}\"}}} > /pgadmin4/servers.json
+RUN echo {\"Servers\":{\"1\":{\"Name\":\"${DATABASE_NAME?-}\",\"Group\":\"Servers\",\"Port\":${DATABASE_PORT_DOCKER?-},\"Username\": \"${DATABASE_USERNAME?-}\",\"Host\":\"${DATABASE_HOST_DOCKER?-}\",\"SSLMode\":\"prefer\",\"MaintenanceDB\":\"${DATABASE_NAME?-}\"}}} > /pgadmin4/servers.json
 EXPOSE 80
