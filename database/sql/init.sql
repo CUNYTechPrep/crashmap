@@ -9,7 +9,7 @@
 
 -- Create tables.
 CREATE TABLE IF NOT EXISTS boro (
-    the_geom geography NOT NULL CHECK (geometrytype(the_geom) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
+    the_geom geometry NOT NULL CHECK (geometrytype(the_geom) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     boro_code INTEGER NOT NULL PRIMARY KEY,
     boro_name VARCHAR NOT NULL UNIQUE,
     shape_leng REAL NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS boro (
 );
 
 CREATE TABLE IF NOT EXISTS nta (
-    the_geom geography NOT NULL CHECK (geometrytype(the_geom) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
+    the_geom geometry NOT NULL CHECK (geometrytype(the_geom) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     borocode INTEGER NOT NULL,
     countyfips INTEGER NOT NULL,
     nta2020 VARCHAR(6) NOT NULL PRIMARY KEY,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS collision (
     crash_time TIME(0) NOT NULL,
     latitude REAL,
     longitude REAL,
-    location geography(point) GENERATED ALWAYS AS (st_point(latitude, longitude)) STORED
+    location geometry(point) GENERATED ALWAYS AS (st_point(longitude, latitude)) STORED
 );
 
 CREATE TABLE IF NOT EXISTS vehicle
