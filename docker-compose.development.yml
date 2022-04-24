@@ -11,9 +11,12 @@ services:
       args:
         - DOCKER_POSTGIS_TAG=${DOCKER_POSTGIS_TAG?-}
         - DATABASE_PORT=${DATABASE_PORT?-}
+        - DATABASE_PORT_DOCKER=${DATABASE_PORT_DOCKER?-}
         - DATABASE_USERNAME=${DATABASE_USERNAME?-}
         - DATABASE_PASSWORD=${DATABASE_PASSWORD?-}
         - DATABASE_NAME=${DATABASE_NAME?-}
+    ports:
+      - "${DATABASE_PORT?-}:${DATABASE_PORT_DOCKER?-}"
 
   pgadmin:
     container_name: crashmap-pgadmin
