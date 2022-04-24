@@ -2,22 +2,18 @@ version: "3.9"
 
 services:
 
-  app:
-    depends_on:
-      - database
-
   database:
-    hostname: ${DATABASE_HOST?-err}
     container_name: crashmap-database
+    hostname: ${DATABASE_HOST_DOCKER?-}
     build:
       context: .
       dockerfile: database.Dockerfile
       args:
-        - DOCKER_POSTGIS_TAG=${DOCKER_POSTGIS_TAG?-err}
-        - DATABASE_PORT=${DATABASE_PORT?-err}
-        - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
-        - DATABASE_PASSWORD=${DATABASE_PASSWORD?-err}
-        - DATABASE_NAME=${DATABASE_NAME?-err}
+        - DOCKER_POSTGIS_TAG=${DOCKER_POSTGIS_TAG?-}
+        - DATABASE_PORT=${DATABASE_PORT?-}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-}
+        - DATABASE_PASSWORD=${DATABASE_PASSWORD?-}
+        - DATABASE_NAME=${DATABASE_NAME?-}
 
   pgadmin:
     container_name: crashmap-pgadmin
@@ -25,14 +21,14 @@ services:
       context: .
       dockerfile: pgadmin.Dockerfile
       args:
-        - DOCKER_PGADMIN_TAG=${DOCKER_PGADMIN_TAG?-err}
-        - PGADMIN_USERNAME=${PGADMIN_USERNAME?-err}
-        - PGADMIN_PASSWORD=${PGADMIN_PASSWORD?-err}
-        - DATABASE_HOST=${DATABASE_HOST?-err}
-        - DATABASE_PORT=${DATABASE_PORT?-err}
-        - DATABASE_NAME=${DATABASE_NAME?-err}
-        - DATABASE_USERNAME=${DATABASE_USERNAME?-err}
+        - DOCKER_PGADMIN_TAG=${DOCKER_PGADMIN_TAG?-}
+        - PGADMIN_USERNAME=${PGADMIN_USERNAME?-}
+        - PGADMIN_PASSWORD=${PGADMIN_PASSWORD?-}
+        - DATABASE_HOST_DOCKER=${DATABASE_HOST_DOCKER?-}
+        - DATABASE_PORT_DOCKER=${DATABASE_PORT_DOCKER?-}
+        - DATABASE_NAME=${DATABASE_NAME?-}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-}
     ports:
-      - "${PGADMIN_PORT?-err}:80"
+      - "${PGADMIN_PORT?-}:80"
     depends_on:
       - database
