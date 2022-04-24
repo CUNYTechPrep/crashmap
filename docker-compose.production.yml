@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+
+  app:
+    container_name: crashmap-app
+    hostname: ${APP_HOST_DOCKER?-}
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+      args:
+        - BUILD_ENVIRONMENT=production
+        - DOCKER_NODE_TAG=${DOCKER_NODE_TAG?-}
+        - DOCKER_PYTHON_TAG=${DOCKER_PYTHON_TAG?-}
+        - APP_PORT_DOCKER=${APP_PORT_DOCKER?-}
+        - DATABASE_SCHEME=${DATABASE_SCHEME?-}
+        - DATABASE_HOST=${DATABASE_HOST?-}
+        - DATABASE_PORT=${DATABASE_PORT?-}
+        - DATABASE_NAME=${DATABASE_NAME?-}
+        - DATABASE_USERNAME=${DATABASE_USERNAME?-}
+        - DATABASE_PASSWORD=${DATABASE_PASSWORD?-}
+    ports:
+      - "${APP_PORT?-}:${APP_PORT_DOCKER?-}"
+    depends_on:
+      - database
