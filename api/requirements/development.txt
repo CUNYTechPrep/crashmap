@@ -1,4 +1,7 @@
 python-dotenv
 psycopg2-binary
-sqlalchemy
+Werkzeug
 Flask
+flask-sqlalchemy
+shapely
+GeoAlchemy2
