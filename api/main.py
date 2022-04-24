@@ -1,7 +1,9 @@
+import csv
+from io import StringIO
 from os import environ, getenv
 from typing import Any, Optional
 
-from flask import Flask, json, jsonify, request, Response
+from flask import Flask, json, jsonify, make_response, request, Response
 from geoalchemy2 import func
 from werkzeug.exceptions import HTTPException
 from werkzeug.urls import url_parse
@@ -51,8 +53,27 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def index() -> Response:
         return app.send_static_file('index.html')
 
+    @app.route('/api/boro.csv', methods=['GET'])
+    def boro_as_csv() -> Response:
+        boro_code = request.args.get('boro_code', None, int)
+        query = db.session.query(BoroModel.boro_code,
+                                 BoroModel.boro_name,
+                                 BoroModel.shape_leng,
+                                 BoroModel.shape_area,
+                                 func.ST_AsText(BoroModel.the_geom).label('the_geom'))
+        if boro_code != None:
+            query = query.filter(BoroModel.boro_code == boro_code)
+        print(f'Returning result of ({query.statement.columns.keys()})')
+        with StringIO() as string_io:
+            csv_writer = csv.writer(string_io)
+            csv_writer.writerow(query.statement.columns.keys())
+            csv_writer.writerows(query.all())
+            response = make_response(string_io.getvalue())
+            response.headers['Content-type'] = 'text/csv'
+            return response
+
     @app.route('/api/boro.geojson', methods=['GET'])
-    def boro() -> Any:
+    def boro_as_geojson() -> dict[str, Any]:
         boro_code = request.args.get('boro_code', None, int)
         query = db.session.query(func.ST_AsGeoJSON(BoroModel))
         if boro_code != None:
