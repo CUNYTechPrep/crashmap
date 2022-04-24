@@ -16,7 +16,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "env-cmd -f ../.env -f ../.env.development -f ../.env.local -f ../.env.development.local --no-override --silent react-scripts start",
+    "start": "env-cmd -f ../.env.development.local --no-override --silent env-cmd -f ../.env.local --no-override --silent env-cmd -f ../.env.development --no-override --silent env-cmd -f ../.env --no-override --silent react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
