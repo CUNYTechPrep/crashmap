@@ -44,7 +44,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         return response
 
     @app.errorhandler(HTTPException)
-    def errorhandler(exception: HTTPException):
+    def errorhandler(exception: HTTPException) -> Response | tuple[HTTPException, int]:
         if app.debug:
             return Response({'error': str(exception)}, 500)
         return exception, 500
