@@ -17,14 +17,9 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     app = Flask(__name__,
                 static_folder='../client/build',  # The React app is served from this local path.
                 static_url_path='/')
-
-    DATABASE_SCHEME = getenv('DATABASE_SCHEME')
-    DATABASE_HOST = getenv('DATABASE_HOST')
-    DATABASE_PORT = getenv('DATABASE_PORT')
-    DATABASE_USERNAME = getenv('DATABASE_USERNAME')
-    DATABASE_PASSWORD = getenv('DATABASE_PASSWORD')
-    DATABASE_NAME = getenv('DATABASE_NAME')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'{DATABASE_SCHEME}://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}'
+    db_uri = {component: getenv(f'DATABASE_{component}')
+              for component in ('SCHEME', 'HOST', 'PORT', 'USERNAME', 'PASSWORD', 'NAME')}
+    app.config['SQLALCHEMY_DATABASE_URI'] = '{SCHEME}://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**db_uri)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
