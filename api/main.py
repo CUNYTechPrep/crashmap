@@ -8,7 +8,7 @@ from geoalchemy2 import func
 from werkzeug.exceptions import HTTPException
 from werkzeug.urls import url_parse
 
-from models import db, BoroModel
+from models import db, BoroModel, NTAModel
 
 # Import services here.
 
@@ -65,6 +65,46 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def boro_as_geojson() -> Response:
         boro_code = request.args.get('boro_code', None, int)
         query = db.session.query(func.ST_AsGeoJSON(BoroModel))
+        if boro_code != None:
+            query = query.filter(BoroModel.boro_code == boro_code)
+        return make_json_response({'type': 'FeatureCollection',
+                                   'features': [json.loads(boro[0]) for boro in query.all()]},
+                                  is_geojson=True)
+
+    @app.route('/api/nta.csv', methods=['GET'])
+    def nta_as_csv() -> Response:
+        nta2020 = request.args.get('nta2020', None, str)
+        cdta2020 = request.args.get('cdta2020', None, str)
+        borocode = request.args.get('borocode', None, int)
+        query = db.session.query(NTAModel.nta2020,
+                                 NTAModel.ntaabbrev,
+                                 NTAModel.ntaname,
+                                 NTAModel.ntatype,
+                                 NTAModel.cdta2020,
+                                 NTAModel.cdtaname,
+                                 NTAModel.borocode,
+                                 NTAModel.countyfips,
+                                 NTAModel.shape_leng,
+                                 NTAModel.shape_area,
+                                 func.ST_AsText(NTAModel.the_geom).label('the_geom'))
+        if nta2020 != None:
+            query = query.filter(NTAModel.nta2020 == nta2020)
+        if cdta2020 != None:
+            query = query.filter(NTAModel.cdta2020 == cdta2020)
+        if borocode != None:
+            query = query.filter(NTAModel.borocode == borocode)
+        return make_csv_response(query.statement.columns.keys(), query.all())
+
+    @app.route('/api/nta.geojson', methods=['GET'])
+    def nta_as_geojson() -> Response:
+        nta2020 = request.args.get('nta2020', None, str)
+        cdta2020 = request.args.get('cdta2020', None, str)
+        boro_code = request.args.get('boro_code', None, int)
+        query = db.session.query(func.ST_AsGeoJSON(NTAModel))
+        if nta2020 != None:
+            query = query.filter(BoroModel.nta2020 == nta2020)
+        if cdta2020 != None:
+            query = query.filter(BoroModel.cdta2020 == cdta2020)
         if boro_code != None:
             query = query.filter(BoroModel.boro_code == boro_code)
         return make_json_response({'type': 'FeatureCollection',
