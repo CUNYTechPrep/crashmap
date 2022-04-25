@@ -1,7 +1,7 @@
 import csv
 from io import StringIO
 from os import environ, getenv
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
 from flask import Flask, json, jsonify, make_response, request, Response
 from geoalchemy2 import func
@@ -29,6 +29,15 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     db.init_app(app)
 
     # TODO: Initialize services here.
+
+    def make_csv_response(header: Iterable, rows: Iterable[Iterable]) -> Response:
+        with StringIO() as string_io:
+            csv_writer = csv.writer(string_io)
+            csv_writer.writerow(header)
+            csv_writer.writerows(rows)
+            response = make_response(string_io.getvalue())
+            response.headers['Content-type'] = 'text/csv'
+            return response
 
     # See the Stack Overflow answer for why this is needed: https://stackoverflow.com/a/44572672/1405571.
     @app.after_request
@@ -63,14 +72,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                  func.ST_AsText(BoroModel.the_geom).label('the_geom'))
         if boro_code != None:
             query = query.filter(BoroModel.boro_code == boro_code)
-        print(f'Returning result of ({query.statement.columns.keys()})')
-        with StringIO() as string_io:
-            csv_writer = csv.writer(string_io)
-            csv_writer.writerow(query.statement.columns.keys())
-            csv_writer.writerows(query.all())
-            response = make_response(string_io.getvalue())
-            response.headers['Content-type'] = 'text/csv'
-            return response
+        return make_csv_response(query.statement.columns.keys(), query.all())
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> dict[str, Any]:
