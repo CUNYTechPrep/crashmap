@@ -39,6 +39,11 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
             response.headers['Content-type'] = 'text/csv'
             return response
 
+    def make_json_response(obj: dict | list, is_geojson: bool = False) -> Response:
+        response = make_response(obj)
+        response.headers['Content-type'] = 'application/geo+json' if is_geojson else 'application/json'
+        return response
+
     # See the Stack Overflow answer for why this is needed: https://stackoverflow.com/a/44572672/1405571.
     @app.after_request
     def add_cors_headers(response: Response) -> Response:
@@ -75,13 +80,14 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         return make_csv_response(query.statement.columns.keys(), query.all())
 
     @app.route('/api/boro.geojson', methods=['GET'])
-    def boro_as_geojson() -> dict[str, Any]:
+    def boro_as_geojson() -> Response:
         boro_code = request.args.get('boro_code', None, int)
         query = db.session.query(func.ST_AsGeoJSON(BoroModel))
         if boro_code != None:
             query = query.filter(BoroModel.boro_code == boro_code)
-        return {"type": "FeatureCollection",
-                "features": [json.loads(boro[0]) for boro in query.all()]}
+        return make_json_response({'type': 'FeatureCollection',
+                                   'features': [json.loads(boro[0]) for boro in query.all()]},
+                                  is_geojson=True)
 
     @app.route('/api/summary', methods=['GET'])
     def suggestion() -> Response:
