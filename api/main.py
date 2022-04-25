@@ -99,4 +99,4 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 flask_app = create_app()
 
 if __name__ == '__main__':
-    flask_app.run(debug=(getenv('FLASK_ENV') == 'development'))
+    flask_app.run(debug=(getenv('FLASK_ENV') == 'development' or getenv('FLASK_DEBUG').lower() == 'true'))
