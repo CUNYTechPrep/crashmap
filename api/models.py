@@ -27,3 +27,13 @@ class NTAModel(db.Model):
     cdtaname = db.Column(db.VARCHAR(), nullable=False)
     shape_leng = db.Column(db.REAL(), nullable=False)
     shape_area = db.Column(db.REAL(), nullable=False)
+
+
+class CollisionModel(db.Model):
+    __tablename__ = 'collision'
+    collision_id = db.Column(db.BIGINT(), nullable=False, primary_key=True)
+    crash_date = db.Column(db.DATE(), nullable=False)
+    crash_time = db.Column(db.TIME(0), nullable=False)
+    latitude = db.Column(db.REAL())
+    longitude = db.Column(db.REAL())
+    location = db.Column(ga2.Geometry('POINT'), db.Computed('st_point(longitude, latitude)', persisted=True))
