@@ -6,16 +6,17 @@ db = SQLAlchemy()
 
 class BoroModel(db.Model):
     __tablename__ = 'boro'
-    the_geom = ga2.Column(ga2.Geography('MULTIPOLYGON'), nullable=False)
+    the_geom = ga2.Column(ga2.Geometry('MULTIPOLYGON'), nullable=False)
     boro_code = db.Column(db.INTEGER(), nullable=False, primary_key=True)
     boro_name = db.Column(db.VARCHAR(), nullable=False)
     shape_leng = db.Column(db.REAL(), nullable=False)
     shape_area = db.Column(db.REAL(), nullable=False)
     ntas = db.relationship('NTAModel', backref='boro', lazy=True)
 
+
 class NTAModel(db.Model):
     __tablename__ = 'nta'
-    the_geom = ga2.Column(ga2.Geography('MULTIPOLYGON'), nullable=False)
+    the_geom = ga2.Column(ga2.Geometry(), nullable=False)
     borocode = db.Column(db.INTEGER(), db.ForeignKey('boro.boro_code'), nullable=False)
     countyfips = db.Column(db.INTEGER(), nullable=False)
     nta2020 = db.Column(db.VARCHAR(6), nullable=False, primary_key=True)
