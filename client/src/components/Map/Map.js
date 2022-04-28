@@ -62,7 +62,6 @@ class Map extends Component {
               break;
             case "Brooklyn":
               brooklynNeighborhoodGeojson.features.push(neighborhood);
-              console.log("brooklyn");
               break;
             case "Manhattan":
               manhattanNeighborhoodGeojson.features.push(neighborhood);
