@@ -9,7 +9,7 @@
 
 -- Create tables.
 CREATE TABLE IF NOT EXISTS boro (
-    the_geom geometry NOT NULL CHECK (geometrytype(the_geom) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
+    the_geom geometry(multipolygon) NOT NULL,
     boro_code INTEGER NOT NULL PRIMARY KEY,
     boro_name VARCHAR NOT NULL UNIQUE,
     shape_leng REAL NOT NULL,
