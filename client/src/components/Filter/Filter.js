@@ -15,20 +15,11 @@ const options = [
 class Filter extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      selectedOption: null,
-    };
   }
 
-  handleChange = (selectedOption) => {
-    console.log("inside handleChange: " + selectedOption.value);
-    //this.setState({radius: selectedOption.value})
-    this.setState({ selectedOption });
-  };
-
   currentBorough = (event) => {
-    if (this.state.selectedOption)
-      console.log("inside currentBorough: " + this.state.selectedOption.value);
+    if (this.props.selectedOption)
+      console.log("inside currentBorough: " + this.props.selectedOption.value);
     else console.log("inside currentBorough: nothing selected!");
   };
 
@@ -38,8 +29,8 @@ class Filter extends Component {
         <Col xs={2}>
           {/* Borough Dropdown */}
           <Select
-            value={this.state.selectedOption}
-            onChange={this.handleChange}
+            value={this.props.selectedOption}
+            onChange={this.props.handleBoroughChange}
             options={options}
           />
         </Col>
