@@ -9,14 +9,14 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedOption: null,
+      selectedBorough: null,
     };
   }
 
-  handleBoroughChange(selectedOption) {
-    console.log("inside handleChange: " + selectedOption.value);
+  handleBoroughChange(selectedBorough) {
+    console.log("inside handleChange: " + selectedBorough.value);
     //this.setState({radius: selectedOption.value})
-    this.setState({ selectedOption });
+    this.setState({ selectedBorough });
   }
 
   render() {
@@ -25,9 +25,9 @@ class App extends Component {
         <div id="hero">
           <Filter
             handleBoroughChange={this.handleBoroughChange.bind(this)}
-            selectedOption={this.state.selectedOption}
+            selectedBorough={this.state.selectedBorough}
           />
-          <Map />
+          <Map selectedBorough={this.state.selectedBorough} />
         </div>
       </Container>
     );

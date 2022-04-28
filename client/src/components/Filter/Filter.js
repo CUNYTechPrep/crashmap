@@ -5,11 +5,16 @@ import Col from "react-bootstrap/Col";
 import "./styles.css";
 
 const options = [
-  { value: "Bronx", label: "BRONX" },
-  { value: "Brooklyn", label: "BROOKLYN" },
-  { value: "Queens", label: "QUEENS" },
-  { value: "Manhattan", label: "MANHATTAN" },
-  { value: "Staten Island", label: "STATEN ISLAND" },
+  { value: "Bronx", label: "BRONX", lng: "-73.865433", lat: "40.8448" },
+  { value: "Brooklyn", label: "BROOKLYN", lng: "-73.9442", lat: "40.6782" },
+  { value: "Queens", label: "QUEENS", lng: "-73.7949", lat: "40.7282" },
+  { value: "Manhattan", label: "MANHATTAN", lng: "-73.9712", lat: "40.7831" },
+  {
+    value: "Staten Island",
+    label: "STATEN ISLAND",
+    lng: "-74.1502",
+    lat: "40.5795",
+  },
 ];
 
 class Filter extends Component {
@@ -18,8 +23,8 @@ class Filter extends Component {
   }
 
   currentBorough = (event) => {
-    if (this.props.selectedOption)
-      console.log("inside currentBorough: " + this.props.selectedOption.value);
+    if (this.props.selectedBorough)
+      console.log("inside currentBorough: " + this.props.selectedBorough.value);
     else console.log("inside currentBorough: nothing selected!");
   };
 
@@ -29,7 +34,7 @@ class Filter extends Component {
         <Col xs={2}>
           {/* Borough Dropdown */}
           <Select
-            value={this.props.selectedOption}
+            value={this.props.selectedBorough}
             onChange={this.props.handleBoroughChange}
             options={options}
           />
