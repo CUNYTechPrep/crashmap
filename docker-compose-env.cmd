@@ -1,7 +1,7 @@
 @echo off
 setlocal
 call:loadEnvs .env .env.%1 .env.local .env.%1.local
-docker-compose --env-file "" -f "docker-compose.%1.yml" "%2"
+docker-compose -f "docker-compose.%1.yml" "%2"
 exit /B %errorlevel%
 endlocal
 

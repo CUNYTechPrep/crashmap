@@ -20,4 +20,4 @@ loadEnv ".env.$1"
 loadEnv .env.local
 loadEnv ".env.$1.local"
 
-docker-compose --env-file '' -f "docker-compose.$1.yml" "$2"
+docker-compose -f "docker-compose.$1.yml" "$2"
