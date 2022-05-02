@@ -1,22 +1,17 @@
-import csv
-from io import StringIO
-from os import environ, getenv
-from typing import Any, Iterable, Optional
+from datetime import date, time
+from os import getenv
+from flask import Flask, jsonify, make_response, request, Response
+from werkzeug.exceptions import BadRequest
 
-from flask import Flask, json, jsonify, make_response, request, Response
-from geoalchemy2 import func
-from werkzeug.exceptions import HTTPException
-from werkzeug.urls import url_parse
-
-from models import db, BoroModel, NTAModel
-
-# Import services here.
+from models import Boro, BoroSummary, Collision, db, H3, H3Summary, NTA2020, NTA2020Summary, Person, Summary, Vehicle
+from services import CustomEncoder
 
 
 def create_app() -> Flask:  # TODO: Move views to a separate file
     app = Flask(__name__,
                 static_folder='../client/build',  # The React app is served from this local path.
                 static_url_path='/')
+    app.json_encoder = CustomEncoder
     db_uri = {component: getenv(f'DATABASE_{component}')
               for component in ('SCHEME', 'HOST', 'PORT', 'USERNAME', 'PASSWORD', 'NAME')}
     app.config['SQLALCHEMY_DATABASE_URI'] = '{SCHEME}://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**db_uri)
@@ -25,103 +20,81 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 
     # TODO: Initialize services here.
 
-    def make_csv_response(header: Iterable, rows: Iterable[Iterable]) -> Response:
-        with StringIO() as string_io:
-            csv_writer = csv.writer(string_io)
-            csv_writer.writerow(header)
-            csv_writer.writerows(rows)
-            response = make_response(string_io.getvalue())
-            response.headers['Content-type'] = 'text/csv'
-            return response
-
-    def make_json_response(obj: dict | list, is_geojson: bool = False) -> Response:
-        response = make_response(obj)
-        response.headers['Content-type'] = 'application/geo+json' if is_geojson else 'application/json'
+    def make_geojson_response(obj: dict | list) -> Response:
+        response = make_response({'type': 'FeatureCollection',
+                                  'features': obj}
+                                 if type(obj) is list
+                                 else obj)
+        response.headers['Content-type'] = 'application/geo+json'
         return response
-
-    @app.errorhandler(HTTPException)
-    def errorhandler(exception: HTTPException) -> Response | tuple[HTTPException, int]:
-        if app.debug:
-            return Response({'error': str(exception)}, 500)
-        return exception, 500
 
     @app.route('/')
     def index() -> Response:
         return app.send_static_file('index.html')
 
-    @app.route('/api/boro.csv', methods=['GET'])
-    def boro_as_csv() -> Response:
-        boro_code = request.args.get('boro_code', None, int)
-        query = db.session.query(BoroModel.boro_code,
-                                 BoroModel.boro_name,
-                                 BoroModel.shape_leng,
-                                 BoroModel.shape_area,
-                                 func.ST_AsText(BoroModel.the_geom).label('the_geom'))
-        if boro_code != None:
-            query = query.filter(BoroModel.boro_code == boro_code)
-        return make_csv_response(query.statement.columns.keys(), query.all())
-
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
-        boro_code = request.args.get('boro_code', None, int)
-        query = db.session.query(func.ST_AsGeoJSON(BoroModel))
-        if boro_code != None:
-            query = query.filter(BoroModel.boro_code == boro_code)
-        return make_json_response({'type': 'FeatureCollection',
-                                   'features': [json.loads(boro[0]) for boro in query.all()]},
-                                  is_geojson=True)
+        query = db.session.query(Boro)
+        if (id := request.args.get('id', None, int)) is not None:
+            query = query.filter(Boro.id == id)
+        return make_geojson_response(query.all())
 
-    @app.route('/api/nta.csv', methods=['GET'])
-    def nta_as_csv() -> Response:
-        nta2020 = request.args.get('nta2020', None, str)
-        cdta2020 = request.args.get('cdta2020', None, str)
-        borocode = request.args.get('borocode', None, int)
-        query = db.session.query(NTAModel.nta2020,
-                                 NTAModel.ntaabbrev,
-                                 NTAModel.ntaname,
-                                 NTAModel.ntatype,
-                                 NTAModel.cdta2020,
-                                 NTAModel.cdtaname,
-                                 NTAModel.borocode,
-                                 NTAModel.countyfips,
-                                 NTAModel.shape_leng,
-                                 NTAModel.shape_area,
-                                 func.ST_AsText(NTAModel.the_geom).label('the_geom'))
-        if nta2020 != None:
-            query = query.filter(NTAModel.nta2020 == nta2020)
-        if cdta2020 != None:
-            query = query.filter(NTAModel.cdta2020 == cdta2020)
-        if borocode != None:
-            query = query.filter(NTAModel.borocode == borocode)
-        return make_csv_response(query.statement.columns.keys(), query.all())
+    @app.route('/api/nta2020.geojson', methods=['GET'])
+    def nta2020_as_geojson() -> Response:
+        query = db.session.query(NTA2020)
+        if (id := request.args.get('id', None, str)) is not None:
+            query = query.filter(NTA2020.id == id)
+        if (boro_id := request.args.get('boro_id', None, int)) is not None:
+            query = query.filter(NTA2020.boro_id == boro_id)
+        return make_geojson_response(query.all())
 
-    @app.route('/api/nta.geojson', methods=['GET'])
-    def nta_as_geojson() -> Response:
-        nta2020 = request.args.get('nta2020', None, str)
-        cdta2020 = request.args.get('cdta2020', None, str)
-        boro_code = request.args.get('boro_code', None, int)
-        query = db.session.query(func.ST_AsGeoJSON(NTAModel))
-        if nta2020 != None:
-            query = query.filter(BoroModel.nta2020 == nta2020)
-        if cdta2020 != None:
-            query = query.filter(BoroModel.cdta2020 == cdta2020)
-        if boro_code != None:
-            query = query.filter(BoroModel.boro_code == boro_code)
-        return make_json_response({'type': 'FeatureCollection',
-                                   'features': [json.loads(boro[0]) for boro in query.all()]},
-                                  is_geojson=True)
+    @app.route('/api/h3.geojson', methods=['GET'])
+    def h3_as_geojson() -> Response:
+        query = db.session.query(H3)
+        if (h3_index := request.args.get('h3_index', None, int)) is not None:
+            query = query.filter(H3.h3_index == h3_index)
+        if (nta2020_id := request.args.get('nta2020_id', None, int)) is not None:
+            query = query.filter(H3.nta2020s.any(id=nta2020_id))
+        if (boro_id := request.args.get('boro_id', None, int)) is not None:
+            query = query.filter(H3.nta2020s.any(boro_id=boro_id))
+        return make_geojson_response(query.all())
 
-    @app.route('/api/summary', methods=['GET'])
-    def suggestion() -> Response:
-        return 'This is a summy summary.'  # TODO: Return actual results.
+    @app.route('/api/collision.geojson', methods=['GET'])
+    def collision_as_geojson() -> Response:
+        query = db.session.query(Collision)
+        return jsonify(query.all())
 
-    @app.route('/api/details', methods=['GET'])
-    def details() -> Response:
-        return 'These are detailed details.'  # TODO: Return actual results.
-
-    @app.route('/api/environment', methods=['GET'])
-    def environment() -> Response:
-        return jsonify(dict(environ))
+    @app.route('/api/summary.json', methods=['GET'])
+    def summary_as_json() -> Response:
+        h3_index = request.args.get('h3_index', None, int)
+        nta2020_id = request.args.get('nta2020_id', None, int)
+        boro_id = request.args.get('boro_id', None, int)
+        if h3_index is not None and nta2020_id is not None or \
+           h3_index is not None and boro_id is not None or \
+           nta2020_id is not None and boro_id is not None:
+            raise BadRequest('h3_index, nta2020_id, and boro_id are mutually exclusive parameters.')
+        if h3_index is not None:
+            model = H3Summary
+            query = db.session.query(model) \
+                              .filter(H3Summary.h3_index == h3_index)
+        elif nta2020_id is not None:
+            model = NTA2020Summary
+            query = db.session.query(model) \
+                              .filter(NTA2020Summary.nta2020_id == nta2020_id)
+        elif boro_id is not None:
+            model = BoroSummary
+            query = db.session.query(model) \
+                              .filter(BoroSummary.boro_id == boro_id)
+        else:
+            model = Summary
+            query = db.session.query(Summary)
+        start_date = request.args.get('start_date', None, date.fromisoformat)
+        end_date = request.args.get('end_date', None, date.fromisoformat)
+        if start_date is not None:
+            query = query.filter(model.date >= start_date)
+        if end_date is not None:
+            query = query.filter(model.date <= end_date)
+        return jsonify(query.all())
 
     return app
 
