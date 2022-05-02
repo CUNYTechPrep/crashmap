@@ -4,3 +4,4 @@ Flask
 flask-sqlalchemy
 shapely
 GeoAlchemy2
+h3
