@@ -12,9 +12,6 @@ ENV POSTGRES_DB=${DATABASE_NAME?-}
 ENV PGDATA /data
 COPY database/sql /docker-entrypoint-initdb.d
 WORKDIR /docker-entrypoint-initdb.d
-RUN ["apt", "update"]
-RUN ["apt", "install", "zpaq"]
-RUN ["zpaq", "x", "data.zpaq"]
 RUN ["sed", "-i", "s/exec \"$@\"/echo \"Skipping...\"/", "/usr/local/bin/docker-entrypoint.sh"]
 RUN ["/usr/local/bin/docker-entrypoint.sh", "postgres"]
 RUN sed -i "s/#port = 5432/port = ${DATABASE_PORT_DOCKER?-}/" /data/postgresql.conf
