@@ -6,7 +6,7 @@ from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from typing import Any, Optional
 
-from models import Boro, BoroSummary, CitySummary, Collision, db, H3, H3Summary, NTA2020, NTA2020Summary, Person, Vehicle
+from models import Boro, BoroSummary, CitySummary, Collision, H3, H3Summary, NTA2020, NTA2020Summary
 
 
 class BoroService:
