@@ -115,103 +115,110 @@ CREATE TABLE IF NOT EXISTS person (
     CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id)
 );
 
-CREATE TABLE IF NOT EXISTS h3_summary (
-    h3_index BIGINT NOT NULL,
-    date DATE NOT NULL,
-    collisions BIGINT NOT NULL CHECK (collisions >= 0),
-    vehicles BIGINT NOT NULL CHECK (vehicles >= 0),
-    people BIGINT NOT NULL CHECK (people >= 0),
-    occupants BIGINT NOT NULL CHECK (occupants >= 0),
-    cyclists BIGINT NOT NULL CHECK (cyclists >= 0),
-    pedestrians BIGINT NOT NULL CHECK (pedestrians >= 0),
-    other_people BIGINT NOT NULL CHECK (other_people >= 0),
-    people_injured BIGINT NOT NULL CHECK (people_injured >= 0),
-    occupants_injured BIGINT NOT NULL CHECK (occupants_injured >= 0),
-    cyclists_injured BIGINT NOT NULL CHECK (cyclists_injured >= 0),
-    pedestrians_injured BIGINT NOT NULL CHECK (pedestrians_injured >= 0),
-    other_people_injured BIGINT NOT NULL CHECK (other_people_injured >= 0),
-    people_killed BIGINT NOT NULL CHECK (people_killed >= 0),
-    occupants_killed BIGINT NOT NULL CHECK (occupants_killed >= 0),
-    cyclists_killed BIGINT NOT NULL CHECK (cyclists_killed >= 0),
-    pedestrians_killed BIGINT NOT NULL CHECK (pedestrians_killed >= 0),
-    other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0),
-    PRIMARY KEY (h3_index, date),
-    CONSTRAINT fk_h3_cell_summary_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index)
-);
-
-CREATE TABLE IF NOT EXISTS nta2020_summary (
-    nta2020_id VARCHAR(6) NOT NULL,
-    date DATE NOT NULL,
-    collisions BIGINT NOT NULL CHECK (collisions >= 0),
-    vehicles BIGINT NOT NULL CHECK (vehicles >= 0),
-    people BIGINT NOT NULL CHECK (people >= 0),
-    occupants BIGINT NOT NULL CHECK (occupants >= 0),
-    cyclists BIGINT NOT NULL CHECK (cyclists >= 0),
-    pedestrians BIGINT NOT NULL CHECK (pedestrians >= 0),
-    other_people BIGINT NOT NULL CHECK (other_people >= 0),
-    people_injured BIGINT NOT NULL CHECK (people_injured >= 0),
-    occupants_injured BIGINT NOT NULL CHECK (occupants_injured >= 0),
-    cyclists_injured BIGINT NOT NULL CHECK (cyclists_injured >= 0),
-    pedestrians_injured BIGINT NOT NULL CHECK (pedestrians_injured >= 0),
-    other_people_injured BIGINT NOT NULL CHECK (other_people_injured >= 0),
-    people_killed BIGINT NOT NULL CHECK (people_killed >= 0),
-    occupants_killed BIGINT NOT NULL CHECK (occupants_killed >= 0),
-    cyclists_killed BIGINT NOT NULL CHECK (cyclists_killed >= 0),
-    pedestrians_killed BIGINT NOT NULL CHECK (pedestrians_killed >= 0),
-    other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0),
-    PRIMARY KEY (nta2020_id, date),
-    CONSTRAINT fk_nta_summary_nta2020_id FOREIGN KEY (nta2020_id) REFERENCES nta2020(id)
-);
-
 -- Create views.
+CREATE VIEW h3_summary AS
+    SELECT collision.h3_index,
+           collision.date,
+           count(DISTINCT collision.id) AS collisions,
+           count(DISTINCT vehicle.id) AS vehicles,
+           count(DISTINCT person.id) AS people,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Other Motorized') AS other_people,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS other_people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS other_people_killed
+    FROM collision
+    LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+    LEFT JOIN person ON collision.id = person.collision_id
+    GROUP BY collision.h3_index, collision.date
+    ORDER BY collision.h3_index, collision.date;
+
+CREATE VIEW nta2020_summary AS
+    SELECT collision.nta2020_id,
+           collision.date,
+           count(DISTINCT collision.id) AS collisions,
+           count(DISTINCT vehicle.id) AS vehicles,
+           count(DISTINCT person.id) AS people,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Other Motorized') AS other_people,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS other_people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS other_people_killed
+    FROM collision
+    LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+    LEFT JOIN person ON collision.id = person.collision_id
+    GROUP BY collision.nta2020_id, collision.date
+    ORDER BY collision.nta2020_id, collision.date;
+
 CREATE VIEW boro_summary AS
-SELECT boro_id,
-       date,
-       sum(collisions) AS collisions,
-       sum(vehicles) AS vehicles,
-       sum(people) AS people,
-       sum(occupants) AS occupants,
-       sum(cyclists) AS cyclists,
-       sum(pedestrians) AS pedestrians,
-       sum(other_people) AS other_people,
-       sum(people_injured) AS people_injured,
-       sum(occupants_injured) AS occupants_injured,
-       sum(cyclists_injured) AS cyclists_injured,
-       sum(pedestrians_injured) AS pedestrians_injured,
-       sum(other_people_injured) AS other_people_injured,
-       sum(people_killed) AS people_killed,
-       sum(occupants_killed) AS occupants_killed,
-       sum(cyclists_killed) AS cyclists_killed,
-       sum(pedestrians_killed) AS pedestrians_killed,
-       sum(other_people_killed) AS other_people_killed
-FROM nta2020_summary
-JOIN nta2020 ON nta2020_summary.nta2020_id = nta2020.id
-JOIN boro ON nta2020.boro_id = boro.id
-GROUP BY boro_id, date
-ORDER BY boro_id, date;
+    SELECT nta2020.boro_id,
+           collision.date,
+           count(DISTINCT collision.id) AS collisions,
+           count(DISTINCT vehicle.id) AS vehicles,
+           count(DISTINCT person.id) AS people,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Other Motorized') AS other_people,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS other_people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS other_people_killed
+    FROM nta2020
+    INNER JOIN collision ON nta2020.id = collision.nta2020_id
+    LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+    LEFT JOIN person ON collision.id = person.collision_id
+    GROUP BY nta2020.boro_id, collision.date
+    ORDER BY nta2020.boro_id, collision.date;
 
 CREATE VIEW city_summary AS
-SELECT date,
-       sum(collisions) AS collisions,
-       sum(vehicles) AS vehicles,
-       sum(people) AS people,
-       sum(occupants) AS occupants,
-       sum(cyclists) AS cyclists,
-       sum(pedestrians) AS pedestrians,
-       sum(other_people) AS other_people,
-       sum(people_injured) AS people_injured,
-       sum(occupants_injured) AS occupants_injured,
-       sum(cyclists_injured) AS cyclists_injured,
-       sum(pedestrians_injured) AS pedestrians_injured,
-       sum(other_people_injured) AS other_people_injured,
-       sum(people_killed) AS people_killed,
-       sum(occupants_killed) AS occupants_killed,
-       sum(cyclists_killed) AS cyclists_killed,
-       sum(pedestrians_killed) AS pedestrians_killed,
-       sum(other_people_killed) AS other_people_killed
-FROM nta2020_summary
-GROUP BY date
-ORDER BY date;
+    SELECT collision.date,
+           count(DISTINCT collision.id) AS collisions,
+           count(DISTINCT vehicle.id) AS vehicles,
+           count(DISTINCT person.id) AS people,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
+           count(DISTINCT person.id) FILTER (WHERE person.type = 'Other Motorized') AS other_people,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS other_people_injured,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
+           count(DISTINCT person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS other_people_killed
+    FROM collision
+    LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+    LEFT JOIN person ON collision.id = person.collision_id
+    GROUP BY collision.date
+    ORDER BY collision.date;
 
 -- Create indices.
 --CREATE INDEX idx_boro_geometry ON boro USING gist (geometry);
