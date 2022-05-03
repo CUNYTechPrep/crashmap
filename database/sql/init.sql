@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS collision (
     id BIGINT NOT NULL PRIMARY KEY,
     date DATE NOT NULL,
     time TIME(0) NOT NULL,
-    location geometry(point) NOT NULL,
-    h3_index BIGINT NOT NULL,
-    nta2020_id VARCHAR(6) NOT NULL,
+    location geometry(point),
+    h3_index BIGINT,
+    nta2020_id VARCHAR(6),
     CONSTRAINT fk_collision_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index),
     CONSTRAINT fk_collision_nta2020_id FOREIGN KEY (nta2020_id) REFERENCES nta2020(id)
 );
@@ -213,7 +213,7 @@ GROUP BY date
 ORDER BY date;
 
 -- Create indices.
-CREATE INDEX idx_boro_geometry ON boro USING gist (geometry);
+--CREATE INDEX idx_boro_geometry ON boro USING gist (geometry);
 
 CREATE INDEX idx_nta2020_geometry ON nta2020 USING gist (geometry);
 
@@ -224,3 +224,39 @@ CREATE INDEX idx_collision_time ON collision USING btree (time);
 --CREATE INDEX idx_collision_location ON collision USING gist (location);
 CREATE INDEX idx_collision_h3_index ON collision USING btree (h3_index);
 CREATE INDEX idx_collision_nta2020_id ON collision USING btree (nta2020_id);
+
+-- Create triggers.
+CREATE FUNCTION compute_h3_index_and_nta2020_id_from_location()
+RETURNS trigger AS $$
+BEGIN
+    IF NEW.location IS NULL THEN
+        NEW.h3_index := NULL;
+        NEW.nta2020_id := NULL;
+    ELSE
+        NEW.h3_index := (SELECT h3.h3_index
+                         FROM h3
+                         ORDER BY h3.geometry <-> NEW.location
+                         LIMIT 1);
+        NEW.nta2020_id := (SELECT nta2020.id
+                           FROM nta2020
+                           ORDER BY nta2020.geometry <-> NEW.location
+                           LIMIT 1);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER collision_insert
+    BEFORE INSERT
+    ON collision
+    FOR EACH ROW
+    EXECUTE PROCEDURE compute_h3_index_and_nta2020_id_from_location();
+
+CREATE TRIGGER collision_update
+    BEFORE UPDATE
+    ON collision
+    FOR EACH ROW
+    WHEN (OLD.location IS DISTINCT FROM NEW.location OR
+          OLD.h3_index IS DISTINCT FROM NEW.h3_index OR
+          OLD.nta2020_id IS DISTINCT FROM NEW.nta2020_id)
+    EXECUTE PROCEDURE compute_h3_index_and_nta2020_id_from_location();
