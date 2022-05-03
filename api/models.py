@@ -161,6 +161,8 @@ class Collision(db.Model):
     date: date
     time: time
     location: WKBElement
+    h3_index: int
+    nta2020_id: str
     vehicles: list[Vehicle]
     people: list[Person]
 
@@ -169,12 +171,15 @@ class Collision(db.Model):
     date = db.Column(db.DATE(), nullable=False)
     time = db.Column(db.TIME(0), nullable=False)
     location = db.Column(ga2.Geometry('POINT'), nullable=False)
+    h3_index = db.Column(db.BIGINT(), db.ForeignKey('h3.h3_index'), nullable=False)
+    nta2020_id = db.Column(db.VARCHAR(6), db.ForeignKey('nta2020.id'), nullable=False)
     vehicles = db.relationship('Vehicle', backref='collision', lazy=True)
-    people = db.relationship('Person', backref='collision', lazy=True)
+    people = db.relationship('Person', backref='collision',
+                             primaryjoin='and_(Collision.id==Person.collision_id,Person.vehicle_id==None)', lazy=True)
 
 
 @dataclass
-class Summary(db.Model):
+class CitySummary(db.Model):
     date: date
     collisions: int
     vehicles: int
@@ -194,7 +199,7 @@ class Summary(db.Model):
     pedestrians_killed: int
     other_people_killed: int
 
-    __tablename__ = 'summary'
+    __tablename__ = 'city_summary'
     date = db.Column(db.DATE(), nullable=False, primary_key=True)
     collisions = db.Column(db.BIGINT(), db.CheckConstraint('collisions >= 0)'), nullable=False)
     vehicles = db.Column(db.BIGINT(), db.CheckConstraint('vehicles >= 0)'), nullable=False)

@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS nta2020 (
     id VARCHAR(6) NOT NULL PRIMARY KEY CHECK (id ~ '^(BK|BX|MN|QN|SI)(\d{4})?$'),
     name VARCHAR UNIQUE,
     boro_id INTEGER NOT NULL,
-    geometry geometry CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
+    geometry geometry NOT NULL CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     CONSTRAINT fk_nta2020_boro_id FOREIGN KEY (boro_id) REFERENCES boro(id)
 );
 
@@ -63,7 +63,11 @@ CREATE TABLE IF NOT EXISTS collision (
     id BIGINT NOT NULL PRIMARY KEY,
     date DATE NOT NULL,
     time TIME(0) NOT NULL,
-    location geometry(point)
+    location geometry(point) NOT NULL,
+    h3_index BIGINT NOT NULL,
+    nta2020_id VARCHAR(6) NOT NULL,
+    CONSTRAINT fk_collision_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index),
+    CONSTRAINT fk_collision_nta2020_id FOREIGN KEY (nta2020_id) REFERENCES nta2020(id)
 );
 
 CREATE TABLE IF NOT EXISTS vehicle (
@@ -110,8 +114,9 @@ CREATE TABLE IF NOT EXISTS person (
     CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id)
 );
 
-CREATE TABLE IF NOT EXISTS summary (
-    date DATE NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS h3_summary (
+    h3_index BIGINT NOT NULL,
+    date DATE NOT NULL,
     collisions BIGINT NOT NULL CHECK (collisions >= 0),
     vehicles BIGINT NOT NULL CHECK (vehicles >= 0),
     people BIGINT NOT NULL CHECK (people >= 0),
@@ -128,7 +133,9 @@ CREATE TABLE IF NOT EXISTS summary (
     occupants_killed BIGINT NOT NULL CHECK (occupants_killed >= 0),
     cyclists_killed BIGINT NOT NULL CHECK (cyclists_killed >= 0),
     pedestrians_killed BIGINT NOT NULL CHECK (pedestrians_killed >= 0),
-    other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0)
+    other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0),
+    PRIMARY KEY (h3_index, date),
+    CONSTRAINT fk_h3_cell_summary_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index)
 );
 
 CREATE TABLE IF NOT EXISTS nta2020_summary (
@@ -153,30 +160,6 @@ CREATE TABLE IF NOT EXISTS nta2020_summary (
     other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0),
     PRIMARY KEY (nta2020_id, date),
     CONSTRAINT fk_nta_summary_nta2020_id FOREIGN KEY (nta2020_id) REFERENCES nta2020(id)
-);
-
-CREATE TABLE IF NOT EXISTS h3_summary (
-    h3_index BIGINT NOT NULL,
-    date DATE NOT NULL,
-    collisions BIGINT NOT NULL CHECK (collisions >= 0),
-    vehicles BIGINT NOT NULL CHECK (vehicles >= 0),
-    people BIGINT NOT NULL CHECK (people >= 0),
-    occupants BIGINT NOT NULL CHECK (occupants >= 0),
-    cyclists BIGINT NOT NULL CHECK (cyclists >= 0),
-    pedestrians BIGINT NOT NULL CHECK (pedestrians >= 0),
-    other_people BIGINT NOT NULL CHECK (other_people >= 0),
-    people_injured BIGINT NOT NULL CHECK (people_injured >= 0),
-    occupants_injured BIGINT NOT NULL CHECK (occupants_injured >= 0),
-    cyclists_injured BIGINT NOT NULL CHECK (cyclists_injured >= 0),
-    pedestrians_injured BIGINT NOT NULL CHECK (pedestrians_injured >= 0),
-    other_people_injured BIGINT NOT NULL CHECK (other_people_injured >= 0),
-    people_killed BIGINT NOT NULL CHECK (people_killed >= 0),
-    occupants_killed BIGINT NOT NULL CHECK (occupants_killed >= 0),
-    cyclists_killed BIGINT NOT NULL CHECK (cyclists_killed >= 0),
-    pedestrians_killed BIGINT NOT NULL CHECK (pedestrians_killed >= 0),
-    other_people_killed BIGINT NOT NULL CHECK (other_people_killed >= 0),
-    PRIMARY KEY (h3_index, date),
-    CONSTRAINT fk_h3_cell_summary_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index)
 );
 
 -- Create views.
@@ -238,4 +221,6 @@ CREATE INDEX idx_h3_cell_geometry ON h3 USING gist (geometry);
 
 CREATE INDEX idx_collision_date ON collision USING btree (date);
 CREATE INDEX idx_collision_time ON collision USING btree (time);
-CREATE INDEX idx_collision_location ON collision USING gist (location);
+--CREATE INDEX idx_collision_location ON collision USING gist (location);
+CREATE INDEX idx_collision_h3_index ON collision USING btree (h3_index);
+CREATE INDEX idx_collision_nta2020_id ON collision USING btree (nta2020_id);

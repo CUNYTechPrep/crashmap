@@ -6,13 +6,13 @@ from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from typing import Optional
 
-from models import Boro, BoroSummary, Collision, db, H3, H3Summary, NTA2020, NTA2020Summary, Person, Summary, Vehicle
+from models import Boro, BoroSummary, CitySummary, Collision, db, H3, H3Summary, NTA2020, NTA2020Summary, Person, Vehicle
 
 
 class BoroService:
     @staticmethod
     def get_boro(id: Optional[int]) -> list[Boro]:
-        query = db.session.query(Boro)
+        query = Boro.query
         if id is not None:
             query = query.filter(Boro.id == id)
         return query.all()
@@ -21,7 +21,7 @@ class BoroService:
 class CollisionService:
     @staticmethod
     def get_collision(id: Optional[int]) -> list[Collision]:
-        query = db.session.query(Collision)
+        query = Collision.query
         if id is not None:
             query = query.filter(Collision.id == id)
         return query.all()
@@ -43,7 +43,7 @@ class H3Service:
     def get_h3(h3_index: Optional[int], k: Optional[int],
                nta2020_id: Optional[str], boro_id: Optional[int], only_water: Optional[bool]) \
             -> list[H3]:
-        query = db.session.query(H3)
+        query = H3.query
         if h3_index is not None:
             if k is None or k == 0:
                 query = query.filter(H3.h3_index == h3_index)
@@ -65,7 +65,7 @@ class H3Service:
 class NTA2020Service:
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
-        query = db.session.query(NTA2020)
+        query = NTA2020.query
         if id is not None:
             query = query.filter(NTA2020.id == id)
         if boro_id is not None:
@@ -77,26 +77,23 @@ class SummaryService:
     @staticmethod
     def get_summary(h3_index: Optional[int], nta2020_id: Optional[str], boro_id: Optional[int],
                     start_date: Optional[date], end_date: Optional[date]) \
-            -> list[BoroSummary | H3Summary | NTA2020Summary]:
+            -> list[BoroSummary | CitySummary | H3Summary | NTA2020Summary]:
         if h3_index is not None and nta2020_id is not None or \
            h3_index is not None and boro_id is not None or \
            nta2020_id is not None and boro_id is not None:
             raise ValueError('h3_index, nta2020_id, and boro_id are mutually exclusive arguments.')
         if h3_index is not None:
             model = H3Summary
-            query = db.session.query(model) \
-                              .filter(H3Summary.h3_index == h3_index)
+            query = model.query.filter(model.h3_index == h3_index)
         elif nta2020_id is not None:
             model = NTA2020Summary
-            query = db.session.query(model) \
-                              .filter(NTA2020Summary.nta2020_id == nta2020_id)
+            query = model.query.filter(model.nta2020_id == nta2020_id)
         elif boro_id is not None:
             model = BoroSummary
-            query = db.session.query(model) \
-                              .filter(BoroSummary.boro_id == boro_id)
+            query = model.query.filter(model.boro_id == boro_id)
         else:
-            model = Summary
-            query = db.session.query(Summary)
+            model = CitySummary
+            query = model.query
         if start_date is not None:
             query = query.filter(model.date >= start_date)
         if end_date is not None:
