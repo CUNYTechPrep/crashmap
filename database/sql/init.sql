@@ -228,8 +228,7 @@ CREATE INDEX idx_nta2020_geometry ON nta2020 USING gist (geometry);
 CREATE INDEX idx_h3_cell_geometry ON h3 USING gist (geometry);
 
 CREATE INDEX idx_collision_date ON collision USING btree (date);
-CREATE INDEX idx_collision_time ON collision USING btree (time);
---CREATE INDEX idx_collision_location ON collision USING gist (location);
+--CREATE INDEX idx_collision_time ON collision USING btree (time);
 CREATE INDEX idx_collision_h3_index ON collision USING btree (h3_index);
 CREATE INDEX idx_collision_nta2020_id ON collision USING btree (nta2020_id);
 
