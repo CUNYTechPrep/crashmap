@@ -40,7 +40,7 @@ class Boro(db.Model):
     name = db.Column(db.VARCHAR(), nullable=False)
     geometry = ga2.Column(ga2.Geometry(), nullable=False)
     land_geometry = ga2.Column(ga2.Geometry(), nullable=False)
-    nta2020s = db.relationship('NTA2020', backref='boro', lazy=True)
+    # nta2020s = db.relationship('NTA2020', backref='boro', lazy=True)
 
 
 @dataclass
@@ -48,7 +48,7 @@ class NTA2020(db.Model):
     id: int
     name: Optional[str]
     boro_id: int
-    geometry: Optional[WKBElement]
+    geometry: WKBElement
 
     __tablename__ = 'nta2020'
     id = db.Column(db.VARCHAR(6), nullable=False, primary_key=True)
@@ -160,9 +160,9 @@ class Collision(db.Model):
     id: int
     date: date
     time: time
-    location: WKBElement
-    h3_index: int
-    nta2020_id: str
+    location: Optional[WKBElement]
+    h3_index: Optional[int]
+    nta2020_id: Optional[str]
     vehicles: list[Vehicle]
     people: list[Person]
 

@@ -4,7 +4,7 @@ from flask.json import JSONEncoder
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
-from typing import Optional
+from typing import Any, Optional
 
 from models import Boro, BoroSummary, CitySummary, Collision, db, H3, H3Summary, NTA2020, NTA2020Summary, Person, Vehicle
 
@@ -28,7 +28,7 @@ class CollisionService:
 
 
 class CustomEncoder(JSONEncoder):
-    def default(self, o):
+    def default(self, o: Any) -> Any:
         if is_dataclass(o):
             return asdict(o)
         elif isinstance(o, (date, time)):
