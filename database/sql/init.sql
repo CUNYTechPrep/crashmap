@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS collision (
     id BIGINT NOT NULL PRIMARY KEY,
     date DATE NOT NULL,
     time TIME(0) NOT NULL,
-    location geometry(point),
+    latitude REAL,
+    longitude REAL,
     h3_index BIGINT,
     nta2020_id VARCHAR(6),
     CONSTRAINT fk_collision_h3_index FOREIGN KEY (h3_index) REFERENCES h3(h3_index),
@@ -227,22 +228,28 @@ CREATE INDEX idx_collision_nta2020_id ON collision USING btree (nta2020_id);
 
 -- Create triggers.
 CREATE FUNCTION compute_h3_index_and_nta2020_id_from_location()
-RETURNS trigger AS $$
+    RETURNS trigger AS
+$$
+DECLARE
+    location geometry(point);
 BEGIN
-    IF NEW.location IS NULL THEN
-        NEW.h3_index := NULL;
-        NEW.nta2020_id := NULL;
+    IF new.latitude IS NULL OR new.longitude IS NULL THEN
+        new.latitude := NULL;
+        new.longitude := NULL;
+        new.h3_index := NULL;
+        new.nta2020_id := NULL;
     ELSE
-        NEW.h3_index := (SELECT h3.h3_index
+        location := st_point(new.longitude, new.latitude);
+        new.h3_index := (SELECT h3.h3_index
                          FROM h3
-                         ORDER BY h3.geometry <-> NEW.location
+                         ORDER BY h3.geometry <-> location
                          LIMIT 1);
-        NEW.nta2020_id := (SELECT nta2020.id
+        new.nta2020_id := (SELECT nta2020.id
                            FROM nta2020
-                           ORDER BY nta2020.geometry <-> NEW.location
+                           ORDER BY nta2020.geometry <-> location
                            LIMIT 1);
     END IF;
-    RETURN NEW;
+    RETURN new;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -256,7 +263,8 @@ CREATE TRIGGER collision_update
     BEFORE UPDATE
     ON collision
     FOR EACH ROW
-    WHEN (OLD.location IS DISTINCT FROM NEW.location OR
-          OLD.h3_index IS DISTINCT FROM NEW.h3_index OR
-          OLD.nta2020_id IS DISTINCT FROM NEW.nta2020_id)
+    WHEN (old.latitude IS DISTINCT FROM new.latitude OR
+          old.longitude IS DISTINCT FROM new.longitude OR
+          old.h3_index IS DISTINCT FROM new.h3_index OR
+          old.nta2020_id IS DISTINCT FROM new.nta2020_id)
     EXECUTE PROCEDURE compute_h3_index_and_nta2020_id_from_location();

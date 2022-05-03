@@ -160,7 +160,8 @@ class Collision(db.Model):
     id: int
     date: date
     time: time
-    location: Optional[WKBElement]
+    latitude: Optional[float]
+    longitude: Optional[float]
     h3_index: Optional[int]
     nta2020_id: Optional[str]
     vehicles: list[Vehicle]
@@ -170,9 +171,10 @@ class Collision(db.Model):
     id = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     date = db.Column(db.DATE(), nullable=False)
     time = db.Column(db.TIME(0), nullable=False)
-    location = db.Column(ga2.Geometry('POINT'), nullable=False)
-    h3_index = db.Column(db.BIGINT(), db.ForeignKey('h3.h3_index'), nullable=False)
-    nta2020_id = db.Column(db.VARCHAR(6), db.ForeignKey('nta2020.id'), nullable=False)
+    latitude = db.Column(db.REAL())
+    longitude = db.Column(db.REAL())
+    h3_index = db.Column(db.BIGINT(), db.ForeignKey('h3.h3_index'))
+    nta2020_id = db.Column(db.VARCHAR(6), db.ForeignKey('nta2020.id'))
     vehicles = db.relationship('Vehicle', backref='collision', lazy=True)
     people = db.relationship('Person', backref='collision',
                              primaryjoin='and_(Collision.id==Person.collision_id,Person.vehicle_id==None)', lazy=True)
