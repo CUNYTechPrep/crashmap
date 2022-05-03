@@ -2,3 +2,14 @@
   height: 650px;
   /* overflow: hidden;  <- TODO fix overflow issue in mapbox container */
 }
+
+.mt-5 {
+  /* margin-top: 3rem!important; */
+  margin-top: 10px !important;
+}
+
+.col-2 {
+  flex: 0 0 auto;
+  width: 16.66666667%;
+  padding-left: 0;
+}

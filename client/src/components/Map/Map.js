@@ -1,14 +1,14 @@
-import React, { Component } from "react";
-import mapboxgl from "!mapbox-gl"; // eslint-disable-line import/no-webpack-loader-syntax
-import "mapbox-gl/dist/mapbox-gl.css";
-import "./styles.css";
-import Row from "react-bootstrap/Row";
+import React, { Component } from 'react';
+import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
+import 'mapbox-gl/dist/mapbox-gl.css';
+import './styles.css';
+import Row from 'react-bootstrap/Row';
 
-import boroughs from "./data/borough_boundaries.geojson";
-import neighborhoods from "./data/2020_neighborhood_tabulation.geojson";
+import boroughs from './data/borough_boundaries.geojson';
+import neighborhoods from './data/2020_neighborhood_tabulation.geojson';
 
 mapboxgl.accessToken =
-  "pk.eyJ1Ijoic2VhbnlhcCIsImEiOiJjbDFmZnJjaHoxMTJ6M29zOXRoajZ0czlvIn0.BJC-KwTeHSCklDlBG9SEuQ";
+  'pk.eyJ1Ijoic2VhbnlhcCIsImEiOiJjbDFmZnJjaHoxMTJ6M29zOXRoajZ0czlvIn0.BJC-KwTeHSCklDlBG9SEuQ';
 
 class Map extends Component {
   constructor(props) {
@@ -16,35 +16,35 @@ class Map extends Component {
     this.state = {
       lng: -73.9066,
       lat: 40.7294,
-      zoom: 10,
+      zoom: 9.5,
     };
     this.mapContainer = React.createRef();
   }
 
   componentDidMount() {
     let bronxNeighborhoodGeojson = {
-      name: "Bronx",
-      type: "FeatureCollection",
+      name: 'Bronx',
+      type: 'FeatureCollection',
       features: [],
     };
     let brooklynNeighborhoodGeojson = {
-      name: "Brooklyn",
-      type: "FeatureCollection",
+      name: 'Brooklyn',
+      type: 'FeatureCollection',
       features: [],
     };
     let manhattanNeighborhoodGeojson = {
-      name: "Manhattan",
-      type: "FeatureCollection",
+      name: 'Manhattan',
+      type: 'FeatureCollection',
       features: [],
     };
     let queensNeighborhoodGeojson = {
-      name: "Queens",
-      type: "FeatureCollection",
+      name: 'Queens',
+      type: 'FeatureCollection',
       features: [],
     };
     let statenIslandNeighborhoodGeojson = {
-      name: "StatenIsland",
-      type: "FeatureCollection",
+      name: 'StatenIsland',
+      type: 'FeatureCollection',
       features: [],
     };
 
@@ -57,23 +57,23 @@ class Map extends Component {
           const borough = neighborhood.properties.boroname;
           // insert borough into geojson object
           switch (borough) {
-            case "Bronx":
+            case 'Bronx':
               bronxNeighborhoodGeojson.features.push(neighborhood);
               break;
-            case "Brooklyn":
+            case 'Brooklyn':
               brooklynNeighborhoodGeojson.features.push(neighborhood);
               break;
-            case "Manhattan":
+            case 'Manhattan':
               manhattanNeighborhoodGeojson.features.push(neighborhood);
               break;
-            case "Queens":
+            case 'Queens':
               queensNeighborhoodGeojson.features.push(neighborhood);
               break;
-            case "Staten Island":
+            case 'Staten Island':
               statenIslandNeighborhoodGeojson.features.push(neighborhood);
               break;
             default:
-              console.log("Borough Not Read: " + borough);
+              console.log('Borough Not Read: ' + borough);
           }
         });
         // console.log(bronxNeighborhoodGeojson);
@@ -88,37 +88,37 @@ class Map extends Component {
     // make map variable available outside of componentDidMount
     this.map = new mapboxgl.Map({
       container: this.mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
+      style: 'mapbox://styles/mapbox/streets-v11',
       center: [lng, lat],
       zoom: zoom,
     });
 
-    this.map.on("load", () => {
-      this.map.addSource("nyc-boroughs", {
-        type: "geojson",
+    this.map.on('load', () => {
+      this.map.addSource('nyc-boroughs', {
+        type: 'geojson',
         data: boroughs,
         // url: "mapbox://seanyap.cl1pf13kw16kj20qxcol6dszx-117xf",
       });
 
       // add neighborhoods
-      this.map.addSource("bronx", {
-        type: "geojson",
+      this.map.addSource('bronx', {
+        type: 'geojson',
         data: bronxNeighborhoodGeojson,
       });
-      this.map.addSource("brooklyn", {
-        type: "geojson",
+      this.map.addSource('brooklyn', {
+        type: 'geojson',
         data: brooklynNeighborhoodGeojson,
       });
-      this.map.addSource("manhattan", {
-        type: "geojson",
+      this.map.addSource('manhattan', {
+        type: 'geojson',
         data: manhattanNeighborhoodGeojson,
       });
-      this.map.addSource("queens", {
-        type: "geojson",
+      this.map.addSource('queens', {
+        type: 'geojson',
         data: queensNeighborhoodGeojson,
       });
-      this.map.addSource("statenIsland", {
-        type: "geojson",
+      this.map.addSource('statenIsland', {
+        type: 'geojson',
         data: statenIslandNeighborhoodGeojson,
       });
 
@@ -133,17 +133,17 @@ class Map extends Component {
       // });
     });
 
-    this.map.once("load", () => {
+    this.map.once('load', () => {
       this.map.resize();
     });
   }
 
   removeAllMapLayers(map) {
-    map.removeLayer("bronx-viz");
-    map.removeLayer("brooklyn-viz");
-    map.removeLayer("manhattan-viz");
-    map.removeLayer("queens-viz");
-    map.removeLayer("statenIsland-viz");
+    map.removeLayer('bronx-viz');
+    map.removeLayer('brooklyn-viz');
+    map.removeLayer('manhattan-viz');
+    map.removeLayer('queens-viz');
+    map.removeLayer('statenIsland-viz');
   }
 
   componentDidUpdate(prevProps) {
@@ -153,51 +153,52 @@ class Map extends Component {
 
       const lng = this.props.selectedBorough.lng;
       const lat = this.props.selectedBorough.lat;
+      // eslint-disable-next-line default-case
       switch (this.props.selectedBorough.value) {
-        case "Bronx":
+        case 'Bronx':
           this.map.addLayer({
-            id: "bronx-viz",
-            type: "line",
-            source: "bronx",
+            id: 'bronx-viz',
+            type: 'line',
+            source: 'bronx',
           });
           break;
-        case "Brooklyn":
+        case 'Brooklyn':
           this.map.addLayer({
-            id: "brooklyn-viz",
-            type: "line",
-            source: "brooklyn",
+            id: 'brooklyn-viz',
+            type: 'line',
+            source: 'brooklyn',
           });
           break;
-        case "Manhattan":
+        case 'Manhattan':
           this.map.addLayer({
-            id: "manhattan-viz",
-            type: "line",
-            source: "manhattan",
+            id: 'manhattan-viz',
+            type: 'line',
+            source: 'manhattan',
           });
           break;
-        case "Queens":
+        case 'Queens':
           this.map.addLayer({
-            id: "queens-viz",
-            type: "line",
-            source: "queens",
+            id: 'queens-viz',
+            type: 'line',
+            source: 'queens',
           });
           break;
-        case "Staten Island":
+        case 'Staten Island':
           this.map.addLayer({
-            id: "statenIsland-viz",
-            type: "line",
-            source: "statenIsland",
+            id: 'statenIsland-viz',
+            type: 'line',
+            source: 'statenIsland',
           });
           break;
       }
       this.map.setCenter([lng, lat]);
-      this.map.setZoom(11);
+      this.map.setZoom(10.5);
     }
   }
 
   render() {
     return (
-      <Row className="mt-3 map-container">
+      <Row className='mt-3 map-container'>
         <div ref={this.mapContainer} />
       </Row>
     );
