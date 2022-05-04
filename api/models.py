@@ -3,8 +3,6 @@ from datetime import date, time
 from flask_sqlalchemy import SQLAlchemy
 import geoalchemy2 as ga2
 from geoalchemy2 import WKBElement
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import declarative_mixin
 from typing import Optional
 
 db = SQLAlchemy()
@@ -180,97 +178,3 @@ class Collision(db.Model):
     vehicles = db.relationship('Vehicle', backref='collision', lazy=True)
     people = db.relationship('Person', backref='collision',
                              primaryjoin='and_(Collision.id==Person.collision_id,Person.vehicle_id==None)', lazy=True)
-
-
-@dataclass
-class SummaryBase:
-    date: date
-    collisions: int
-    vehicles: int
-    people: int
-    occupants: int
-    cyclists: int
-    pedestrians: int
-    other_people: int
-    people_injured: int
-    occupants_injured: int
-    cyclists_injured: int
-    pedestrians_injured: int
-    other_people_injured: int
-    people_killed: int
-    occupants_killed: int
-    cyclists_killed: int
-    pedestrians_killed: int
-    other_people_killed: int
-
-    date = db.Column(db.DATE(), nullable=False, primary_key=True)
-    collisions = db.Column(db.BIGINT(), db.CheckConstraint('collisions >= 0)'), nullable=False)
-    vehicles = db.Column(db.BIGINT(), db.CheckConstraint('vehicles >= 0)'), nullable=False)
-    people = db.Column(db.BIGINT(), db.CheckConstraint('people >= 0)'), nullable=False)
-    occupants = db.Column(db.BIGINT(), db.CheckConstraint('occupants >= 0)'), nullable=False)
-    cyclists = db.Column(db.BIGINT(), db.CheckConstraint('cyclists >= 0)'), nullable=False)
-    pedestrians = db.Column(db.BIGINT(), db.CheckConstraint('pedestrians >= 0)'), nullable=False)
-    other_people = db.Column(db.BIGINT(), db.CheckConstraint('other_people >= 0)'), nullable=False)
-    people_injured = db.Column(db.BIGINT(), db.CheckConstraint('people_injured >= 0)'), nullable=False)
-    occupants_injured = db.Column(db.BIGINT(), db.CheckConstraint('occupants_injured >= 0)'), nullable=False)
-    cyclists_injured = db.Column(db.BIGINT(), db.CheckConstraint('cyclists_injured >= 0)'), nullable=False)
-    pedestrians_injured = db.Column(db.BIGINT(), db.CheckConstraint('pedestrians_injured >= 0)'), nullable=False)
-    other_people_injured = db.Column(db.BIGINT(), db.CheckConstraint('other_people_injured >= 0)'), nullable=False)
-    people_killed = db.Column(db.BIGINT(), db.CheckConstraint('people_killed >= 0)'), nullable=False)
-    occupants_killed = db.Column(db.BIGINT(), db.CheckConstraint('occupants_killed >= 0)'), nullable=False)
-    cyclists_killed = db.Column(db.BIGINT(), db.CheckConstraint('cyclists_killed >= 0)'), nullable=False)
-    pedestrians_killed = db.Column(db.BIGINT(), db.CheckConstraint('pedestrians_killed >= 0)'), nullable=False)
-    other_people_killed = db.Column(db.BIGINT(), db.CheckConstraint('other_people_killed >= 0)'), nullable=False)
-
-
-@dataclass
-class CitySummary(db.Model, SummaryBase):
-    __tablename__ = 'city_summary'
-
-
-@declarative_mixin
-@dataclass
-class BoroIdMixin:
-    boro_id: int
-
-    @declared_attr
-    def boro_id(cls):
-        return db.Column(db.BIGINT(), db.ForeignKey('boro_id'), nullable=False, primary_key=True)
-
-
-@dataclass
-class BoroSummary(db.Model, SummaryBase, BoroIdMixin):
-    __tablename__ = 'boro_summary'
-    __tableargs__ = (db.PrimaryKeyConstraint(BoroIdMixin.boro_id, SummaryBase.date),)
-
-
-@declarative_mixin
-@dataclass
-class NTA2020IdMixin:
-    nta2020_id: str
-
-    @declared_attr
-    def nta2020_id(cls):
-        return db.Column(db.VARCHAR(6), db.ForeignKey('nta2020.id'), nullable=False, primary_key=True)
-
-
-@dataclass
-class NTA2020Summary(db.Model, SummaryBase, NTA2020IdMixin):
-    __tablename__ = 'nta2020_summary'
-    __tableargs__ = (db.PrimaryKeyConstraint(NTA2020IdMixin.nta2020_id, SummaryBase.date),)
-
-
-@declarative_mixin
-@dataclass
-class H3IndexMixin:
-    h3_index: int
-
-    @declared_attr
-    def h3_index(cls):
-        return db.Column(db.BIGINT(), db.ForeignKey('h3.h3_index'), nullable=False, primary_key=True)
-
-
-@dataclass
-class H3Summary(db.Model, SummaryBase, H3IndexMixin):
-    __tablename__ = 'h3_summary'
-    __tableargs__ = (db.PrimaryKeyConstraint(H3IndexMixin.h3_index, SummaryBase.date),)
