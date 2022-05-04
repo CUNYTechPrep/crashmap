@@ -7,22 +7,6 @@ from typing import Optional
 
 db = SQLAlchemy()
 
-cardinal_direction = db.Enum('North', 'East', 'South', 'West', 'Northeast', 'Southeast', 'Northwest', 'Southwest',
-                             name='cardinal_direction')
-
-injury_type = db.Enum('Injured', 'Killed', name='injury_type')
-
-person_sex = db.Enum('Female', 'Male', name='person_sex')
-
-person_type = db.Enum('Bicyclist', 'Occupant', 'Pedestrian', 'Other Motorized', name='person_type')
-
-us_state = db.Enum('AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-                   'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD',
-                   'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH',
-                   'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-                   'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY',
-                   name='us_state')
-
 h3_nta2020 = db.Table('h3_nta2020',
                       db.Column('h3_index', db.BIGINT(), db.ForeignKey('h3.h3_index')),
                       db.Column('nta2020_id', db.VARCHAR(6), db.ForeignKey('nta2020.id')))
@@ -65,7 +49,7 @@ class H3(db.Model):
     geometry: WKBElement
 
     __tablename__ = 'h3'
-    h3_index = db.Column(db.BIGINT, nullable=False, primary_key=True)
+    h3_index = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     only_water = db.Column(db.BOOLEAN(), nullable=False)
     geometry = ga2.Column(ga2.Geometry('POLYGON'), nullable=False)
     nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref=db.backref('nta2020'), viewonly=True)
@@ -95,8 +79,8 @@ class Person(db.Model):
     id = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     collision_id = db.Column(db.BIGINT(), db.ForeignKey('collision.id'), nullable=False)
     vehicle_id = db.Column(db.BIGINT(), db.ForeignKey('vehicle.id'))
-    type = db.Column(person_type)
-    injury = db.Column(injury_type)
+    type = db.Column(db.VARCHAR())
+    injury = db.Column(db.VARCHAR())
     age = db.Column(db.INTEGER())
     ejection = db.Column(db.VARCHAR())
     emotional_status = db.Column(db.VARCHAR())
@@ -108,7 +92,7 @@ class Person(db.Model):
     complaint = db.Column(db.VARCHAR())
     role = db.Column(db.VARCHAR())
     contributing_factors = db.Column(db.ARRAY(db.VARCHAR()))
-    sex = db.Column(person_sex)
+    sex = db.Column(db.VARCHAR())
 
 
 @dataclass
@@ -136,16 +120,16 @@ class Vehicle(db.Model):
     __tablename__ = 'vehicle'
     id = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     collision_id = db.Column(db.BIGINT(), db.ForeignKey('collision.id'), nullable=False)
-    state_registration = db.Column(us_state)
+    state_registration = db.Column(db.VARCHAR())
     type = db.Column(db.VARCHAR())
     make = db.Column(db.VARCHAR())
     model = db.Column(db.VARCHAR())
     year = db.Column(db.INTEGER())
-    travel_direction = db.Column(cardinal_direction)
+    travel_direction = db.Column(db.VARCHAR())
     occupants = db.Column(db.INTEGER())
     driver_sex = db.Column(db.VARCHAR())
     driver_license_status = db.Column(db.VARCHAR())
-    driver_license_jurisdiction = db.Column(us_state)
+    driver_license_jurisdiction = db.Column(db.VARCHAR())
     pre_crash = db.Column(db.VARCHAR())
     point_of_impact = db.Column(db.VARCHAR())
     damages = db.Column(db.ARRAY(db.VARCHAR()))

@@ -7,27 +7,6 @@
 -- Enable PostGIS topology support.
 --CREATE EXTENSION postgis_topology;
 
--- Create types.
-CREATE TYPE cardinal_direction AS ENUM (
-    'North', 'East', 'South', 'West',
-    'Northeast', 'Southeast',
-    'Northwest', 'Southwest'
-);
-
-CREATE TYPE person_sex AS ENUM ('Female', 'Male');
-
-CREATE TYPE person_type AS ENUM ('Bicyclist', 'Occupant', 'Pedestrian', 'Other Motorized');
-
-CREATE TYPE injury_type AS ENUM ('Injured', 'Killed');
-
-CREATE TYPE us_state AS ENUM (
-    'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD',
-    'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH',
-    'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY'
-);
-
 -- Create tables.
 CREATE TABLE IF NOT EXISTS boro (
     id INTEGER NOT NULL PRIMARY KEY,
@@ -74,16 +53,16 @@ CREATE TABLE IF NOT EXISTS collision (
 CREATE TABLE IF NOT EXISTS vehicle (
     id BIGINT NOT NULL PRIMARY KEY,
     collision_id BIGINT NOT NULL,
-    state_registration us_state,
+    state_registration VARCHAR,
     type VARCHAR,
     make VARCHAR,
     model VARCHAR,
     year INTEGER,
-    travel_direction cardinal_direction,
+    travel_direction VARCHAR,
     occupants INTEGER,
     driver_sex VARCHAR,
     driver_license_status VARCHAR,
-    driver_license_jurisdiction us_state,
+    driver_license_jurisdiction VARCHAR,
     pre_crash VARCHAR,
     point_of_impact VARCHAR,
     damages VARCHAR ARRAY[4],
@@ -97,8 +76,8 @@ CREATE TABLE IF NOT EXISTS person (
     id BIGINT NOT NULL PRIMARY KEY,
     collision_id BIGINT NOT NULL,
     vehicle_id BIGINT,
-    type person_type,
-    injury injury_type,
+    type VARCHAR,
+    injury VARCHAR,
     age INTEGER,
     ejection VARCHAR,
     emotional_status VARCHAR,
@@ -110,7 +89,7 @@ CREATE TABLE IF NOT EXISTS person (
     complaint VARCHAR,
     role VARCHAR,
     contributing_factors VARCHAR ARRAY[2],
-    sex person_sex,
+    sex VARCHAR,
     CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id),
     CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id)
 );
