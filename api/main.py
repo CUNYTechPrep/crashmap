@@ -15,6 +15,9 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
               for component in ('SCHEME', 'HOST', 'PORT', 'USERNAME', 'PASSWORD', 'NAME')}
     app.config['SQLALCHEMY_DATABASE_URI'] = '{SCHEME}://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{NAME}'.format(**db_uri)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    if app.debug:
+        app.config['SQLALCHEMY_ECHO'] = True
+        app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     db.init_app(app)
 
     def make_geojson_response(obj: dict | list) -> Response:
