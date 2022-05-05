@@ -1,6 +1,7 @@
 from datetime import date, time
 from os import getenv
 from flask import Flask, jsonify, make_response, request, Response
+from werkzeug.urls import url_parse
 
 from models import db
 from services import BoroService, CollisionService, CustomEncoder, H3Service, NTA2020Service, SummaryService
@@ -26,6 +27,19 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                  if type(obj) is list
                                  else obj)
         response.headers['Content-type'] = 'application/geo+json'
+        return response
+
+    # See the Stack Overflow answer for why this is needed: https://stackoverflow.com/a/44572672/1405571.
+    @app.after_request
+    def add_cors_headers(response: Response) -> Response:
+        if request.referrer and url_parse(request.referrer[:-1]).host == request.host:
+            response.headers.add('Access-Control-Allow-Origin', request.host_url)
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+            response.headers.add('Access-Control-Allow-Headers', 'Cache-Control')
+            response.headers.add('Access-Control-Allow-Headers', 'X-Requested-With')
+            response.headers.add('Access-Control-Allow-Headers', 'Authorization')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, OPTIONS, POST')
         return response
 
     @app.route('/')
