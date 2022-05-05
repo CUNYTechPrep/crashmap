@@ -1,3 +1,11 @@
+##!/usr/local/Cellar/bash/5.1.16/bin/bash
+
+# Note: If you are running this script with bash, you will need bash version 5.
+#   This is crucial especially for macOS user because macOS ships by default
+#   bash version 3 at the time of writing this.
+# Example shebang on line 1 if you installed bash 5.1.16 with brew. Uncomment 
+#   and modify it to the path you installed bash 5.
+
 loadEnv() {
   local envFile="${1}"
   if [ -f "$envFile" ]; then
