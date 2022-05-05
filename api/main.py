@@ -55,16 +55,39 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     @app.route('/api/collision.json', methods=['GET'])
     def collision_as_geojson() -> Response:
         id = request.args.get('id', None, int)
-        return jsonify(CollisionService.get_collision(id))
-
-    @app.route('/api/summary.json', methods=['GET'])
-    def summary_as_json() -> Response:
         h3_index = request.args.get('h3_index', None, int)
+        start_date = request.args.get('start_date', None, date.fromisoformat)
+        end_date = request.args.get('end_date', None, date.fromisoformat)
+        return jsonify(CollisionService.get_collision(id, h3_index, start_date, end_date))
+
+    @app.route('/api/h3_summary.json', methods=['GET'])
+    def h3_summary_as_json() -> Response:
+        h3_index = request.args.get('h3_index', None, int)
+        nta2020_id = request.args.get('nta2020_id', None, str)
+        start_date = request.args.get('start_date', None, date.fromisoformat)
+        end_date = request.args.get('end_date', None, date.fromisoformat)
+        return jsonify(SummaryService.get_h3_summary(h3_index, nta2020_id, start_date, end_date))
+
+    @app.route('/api/nta2020_summary.json', methods=['GET'])
+    def nta2020_summary_as_json() -> Response:
         nta2020_id = request.args.get('nta2020_id', None, str)
         boro_id = request.args.get('boro_id', None, int)
         start_date = request.args.get('start_date', None, date.fromisoformat)
         end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(SummaryService.get_summary(h3_index, nta2020_id, boro_id, start_date, end_date))
+        return jsonify(SummaryService.get_nta2020_summary(nta2020_id, boro_id, start_date, end_date))
+
+    @app.route('/api/boro_summary.json', methods=['GET'])
+    def boro_summary_as_json() -> Response:
+        boro_id = request.args.get('boro_id', None, int)
+        start_date = request.args.get('start_date', None, date.fromisoformat)
+        end_date = request.args.get('end_date', None, date.fromisoformat)
+        return jsonify(SummaryService.get_boro_summary(boro_id, start_date, end_date))
+
+    @app.route('/api/city_summary.json', methods=['GET'])
+    def city_summary_as_json() -> Response:
+        start_date = request.args.get('start_date', None, date.fromisoformat)
+        end_date = request.args.get('end_date', None, date.fromisoformat)
+        return jsonify(SummaryService.get_city_summary(start_date, end_date))
 
     return app
 

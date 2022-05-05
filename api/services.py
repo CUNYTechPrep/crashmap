@@ -4,7 +4,6 @@ from flask.json import JSONEncoder
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
-from sqlalchemy import sql
 from typing import Any, Optional
 
 from models import Boro, Collision, db, H3, NTA2020
@@ -21,10 +20,19 @@ class BoroService:
 
 class CollisionService:
     @staticmethod
-    def get_collision(id: Optional[int]) -> list[Collision]:
+    def get_collision(id: Optional[int], h3_index: Optional[int], start_date: Optional[date], end_date: Optional[date])\
+            -> list[Collision]:
+        if (id is None) == (h3_index is None) or \
+           id is not None and (start_date is not None or end_date is not None) or \
+           h3_index is not None and (start_date is None or end_date is None or not (0 <= (end_date - start_date).days <= 180)):
+            raise ValueError('Invalid combination of parameters provided.')
+        if h3_index is not None and not (0 <= (end_date - start_date).days <= 180):
+            raise ValueError('The start and end dates must be no more than 180 days apart.')
         query = Collision.query
         if id is not None:
             query = query.filter(Collision.id == id)
+        else:
+            query = query.filter(Collision.h3_index == h3_index and start_date <= Collision.date <= end_date)
         return query.all()
 
 
@@ -41,10 +49,11 @@ class CustomEncoder(JSONEncoder):
 
 class H3Service:
     @staticmethod
-    def get_h3(h3_index: Optional[int], k: Optional[int],
-               nta2020_id: Optional[str], boro_id: Optional[int], only_water: Optional[bool]) \
+    def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
             -> list[H3]:
         query = H3.query
+        if h3_index is None and nta2020_id is None:
+            raise ValueError('h3_index or nta2020_id must be provided.')
         if h3_index is not None:
             if k is None or k == 0:
                 query = query.filter(H3.h3_index == h3_index)
@@ -56,8 +65,6 @@ class H3Service:
             raise ValueError('k cannot be specified without h3_index.')
         if nta2020_id is not None:
             query = query.filter(H3.nta2020s.any(id=nta2020_id))
-        if boro_id is not None:
-            query = query.filter(H3.nta2020s.any(boro_id=boro_id))
         if only_water is not None:
             query = query.filter(H3.only_water == only_water)
         return query.all()
@@ -66,6 +73,8 @@ class H3Service:
 class NTA2020Service:
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
+        if (id is None) == (boro_id is None):
+            raise ValueError('Either id or boro_id must be provided.')
         query = NTA2020.query
         if id is not None:
             query = query.filter(NTA2020.id == id)
@@ -75,64 +84,111 @@ class NTA2020Service:
 
 
 class SummaryService:
-    SQL_TEMPLATE = '''SELECT {key_column_canceller}{key_column},
-                             min(collision.date) AS start_date,
-                             max(collision.date) AS end_date,
-                             count(DISTINCT collision.id) AS collisions,
-                             count(DISTINCT vehicle.id) AS vehicles,
-                             count(person.id) AS people,
-                             count(person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
-                             count(person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
-                             count(person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
-                             count(person.id) FILTER (WHERE person.type = 'Other Motorized') AS others,
-                             count(person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
-                             count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
-                             count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
-                             count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
-                             count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS others_injured,
-                             count(person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
-                             count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
-                             count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
-                             count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
-                             count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS others_killed
-                      FROM collision
-                      {additional_join}
-                      LEFT JOIN vehicle ON collision.id = vehicle.collision_id
-                      LEFT JOIN person ON collision.id = person.collision_id
-                      WHERE collision.date BETWEEN :start_date AND :end_date {key_column_canceller}AND {key_column} = :x
-                      {key_column_canceller}GROUP BY {key_column}
-                      {key_column_canceller}ORDER BY {key_column}'''
+    COMMON_COLUMNS = '''min(collision.date) AS start_date,
+                        max(collision.date) AS end_date,
+                        count(DISTINCT collision.id) AS collisions,
+                        count(DISTINCT vehicle.id) AS vehicles,
+                        count(person.id) AS people,
+                        count(person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
+                        count(person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
+                        count(person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
+                        count(person.id) FILTER (WHERE person.type = 'Other Motorized') AS others,
+                        count(person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
+                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
+                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
+                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
+                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS others_injured,
+                        count(person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
+                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
+                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
+                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
+                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS others_killed'''
 
     @staticmethod
-    def get_summary(h3_index: Optional[int], nta2020_id: Optional[str], boro_id: Optional[int],
-                    start_date: Optional[date], end_date: Optional[date]) \
-            -> list[dict[str, Any]]:
-        if h3_index is not None and nta2020_id is not None or \
-           h3_index is not None and boro_id is not None or \
-           nta2020_id is not None and boro_id is not None:
-            raise ValueError('h3_index, nta2020_id, and boro_id are mutually exclusive arguments.')
-        sql_customizations = {'key_column_canceller': '--',
-                              'key_column': '',
-                              'additional_join': '--'}
-        parameters = {'start_date': '0001-01-01',
-                      'end_date': '9999-12-31',
-                      'x': ''}
+    def get_h3_summary(h3_index: Optional[int], nta2020_id: Optional[str],
+                       start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
         if h3_index is not None:
-            sql_customizations['key_column_canceller'] = ''
-            sql_customizations['key_column'] = 'collision.h3_index'
-            parameters['x'] = h3_index
+            key_column = 'collision.h3_index'
+            key = h3_index
         elif nta2020_id is not None:
-            sql_customizations['key_column_canceller'] = ''
-            sql_customizations['key_column'] = 'collision.nta2020_id'
-            parameters['x'] = nta2020_id
+            key_column = 'collision.nta2020_id'
+            key = nta2020_id
+        else:
+            raise ValueError('Invalid combination of parameters provided.')
+        if start_date is None or end_date is None or not (0 <= (end_date - start_date).days <= 180):
+            raise ValueError('Both start_date and end_date must be provided and no more than 180 days apart.')
+        sql_statement = f'''SELECT collision.h3_index,
+                                   {SummaryService.COMMON_COLUMNS}
+                            FROM collision
+                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+                            LEFT JOIN person ON collision.id = person.collision_id
+                            WHERE {key_column} = :key AND collision.date BETWEEN :start_date AND :end_date
+                            GROUP BY collision.h3_index
+                            ORDER BY collision.h3_index'''
+        parameters = {'key': key,
+                      'start_date': start_date,
+                      'end_date': end_date}
+        return [*map(dict, db.session.execute(sql_statement, parameters))]
+
+    @staticmethod
+    def get_nta2020_summary(nta2020_id: Optional[str], boro_id: Optional[int],
+                            start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
+        if nta2020_id is not None:
+            key_column = 'collision.nta2020_id'
+            key = nta2020_id
         elif boro_id is not None:
-            sql_customizations['key_column_canceller'] = ''
-            sql_customizations['key_column'] = 'nta2020.boro_id'
-            sql_customizations['additional_join'] = 'INNER JOIN nta2020 ON collision.nta2020_id = nta2020.id'
-            parameters['x'] = boro_id
-        if start_date is not None:
-            parameters['start_date'] = start_date
-        if end_date is not None:
-            parameters['end_date'] = end_date
-        statement = sql.text(SummaryService.SQL_TEMPLATE.format(**sql_customizations))
-        return [*map(dict, db.session.execute(statement, parameters))]
+            key_column = 'nta2020.boro_id'
+            key = boro_id
+        else:
+            raise ValueError('Invalid combination of parameters provided.')
+        if start_date is None or end_date is None or not (0 <= (end_date - start_date).days <= 180):
+            raise ValueError('Both start_date and end_date must be provided and no more than 180 days apart.')
+        sql_statement = f'''SELECT collision.nta2020_id,
+                                   {SummaryService.COMMON_COLUMNS}
+                            FROM collision
+                            INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
+                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+                            LEFT JOIN person ON collision.id = person.collision_id
+                            WHERE {key_column} = :key AND collision.date BETWEEN :start_date AND :end_date
+                            GROUP BY collision.nta2020_id
+                            ORDER BY collision.nta2020_id'''
+        parameters = {'key': key,
+                      'start_date': start_date,
+                      'end_date': end_date}
+        return [*map(dict, db.session.execute(sql_statement, parameters))]
+
+    @staticmethod
+    def get_boro_summary(boro_id: Optional[int], start_date: Optional[date], end_date: Optional[date]) \
+            -> list[dict[str, Any]]:
+        if start_date is None or end_date is None or not (0 <= (end_date - start_date).days <= 180):
+            raise ValueError('Both start_date and end_date must be provided and no more than 180 days apart.')
+        if boro_id is None:
+            predicate = ''
+        else:
+            predicate = 'nta2020.boro_id = :boro_id AND'
+        sql_statement = f'''SELECT nta2020.boro_id,
+                                   {SummaryService.COMMON_COLUMNS}
+                            FROM collision
+                            INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
+                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+                            LEFT JOIN person ON collision.id = person.collision_id
+                            WHERE {predicate} collision.date BETWEEN :start_date AND :end_date
+                            GROUP BY nta2020.boro_id
+                            ORDER BY nta2020.boro_id'''
+        parameters = {'boro_id': boro_id,
+                      'start_date': start_date,
+                      'end_date': end_date}
+        return [*map(dict, db.session.execute(sql_statement, parameters))]
+
+    @staticmethod
+    def get_city_summary(start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
+        if start_date is None or end_date is None or not (0 <= (end_date - start_date).days <= 180):
+            raise ValueError('Both start_date and end_date must be provided and no more than 180 days apart.')
+        sql_statement = f'''SELECT {SummaryService.COMMON_COLUMNS}
+                            FROM collision
+                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
+                            LEFT JOIN person ON collision.id = person.collision_id
+                            WHERE collision.date BETWEEN :start_date AND :end_date'''
+        parameters = {'start_date': start_date,
+                      'end_date': end_date}
+        return [*map(dict, db.session.execute(sql_statement, parameters))]

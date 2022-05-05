@@ -65,10 +65,10 @@ CREATE TABLE IF NOT EXISTS vehicle (
     driver_license_jurisdiction VARCHAR,
     pre_crash VARCHAR,
     point_of_impact VARCHAR,
-    damages VARCHAR ARRAY[4],
-    public_property_damage BOOLEAN,
+    damages VARCHAR ARRAY CHECK (array_length(damages, 1) BETWEEN 1 AND 4),
+    public_property_damage VARCHAR,
     public_property_damage_type VARCHAR,
-    contributing_factors VARCHAR ARRAY[2],
+    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
     CONSTRAINT fk_vehicle_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id)
 );
 
@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS person (
     id BIGINT NOT NULL PRIMARY KEY,
     collision_id BIGINT NOT NULL,
     vehicle_id BIGINT,
+    dangling_vehicle_id BIGINT,
     type VARCHAR,
     injury VARCHAR,
     age INTEGER,
@@ -88,10 +89,12 @@ CREATE TABLE IF NOT EXISTS person (
     action VARCHAR,
     complaint VARCHAR,
     role VARCHAR,
-    contributing_factors VARCHAR ARRAY[2],
+    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
     sex VARCHAR,
     CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id),
-    CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id)
+    CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
+    CONSTRAINT ck_vehicle_id_and_dangling_vehicle_id_are_mutually_exclusive
+        CHECK (NOT (vehicle_id IS NOT NULL AND dangling_vehicle_id IS NOT NULL))
 );
 
 -- Create indices.

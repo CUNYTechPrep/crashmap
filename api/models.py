@@ -60,6 +60,7 @@ class Person(db.Model):
     id: int
     collision_id: int
     vehicle_id: Optional[int]
+    dangling_vehicle_id: Optional[int]
     type: Optional[str]
     injury: Optional[str]
     age: Optional[int]
@@ -79,6 +80,7 @@ class Person(db.Model):
     id = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     collision_id = db.Column(db.BIGINT(), db.ForeignKey('collision.id'), nullable=False)
     vehicle_id = db.Column(db.BIGINT(), db.ForeignKey('vehicle.id'))
+    dangling_vehicle_id = db.Column(db.BIGINT())
     type = db.Column(db.VARCHAR())
     injury = db.Column(db.VARCHAR())
     age = db.Column(db.INTEGER())
