@@ -77,7 +77,7 @@ class NTA2020Service:
             raise ValueError('Either id or boro_id must be provided.')
         query = NTA2020.query
         if id is not None:
-            query = query.filter(NTA2020.id == id)
+            query = query.filter(NTA2020.id.like(id))
         if boro_id is not None:
             query = query.filter(NTA2020.boro_id == boro_id)
         return query.all()
