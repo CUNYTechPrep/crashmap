@@ -33,7 +33,7 @@ class Map extends Component {
     this.map.on("load", () => {
       console.log(this.map.getSource("manhattan"));
       // manhattan
-      fetch(`${api_prefix}nta2020.geojson?boro_id=1`)
+      fetch(`${api_prefix}nta2020.geojson?id=MN____`)
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
@@ -45,7 +45,7 @@ class Map extends Component {
           }
         });
       // bronx
-      fetch(`${api_prefix}nta2020.geojson?boro_id=2`)
+      fetch(`${api_prefix}nta2020.geojson?id=BX____`)
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
@@ -57,7 +57,7 @@ class Map extends Component {
           }
         });
       // brooklyn
-      fetch(`${api_prefix}nta2020.geojson?boro_id=3`)
+      fetch(`${api_prefix}nta2020.geojson?id=BK____`)
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
@@ -69,7 +69,7 @@ class Map extends Component {
           }
         });
       // queens
-      fetch(`${api_prefix}nta2020.geojson?boro_id=4`)
+      fetch(`${api_prefix}nta2020.geojson?id=QN____`)
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
@@ -81,7 +81,7 @@ class Map extends Component {
           }
         });
       // staten island
-      fetch(`${api_prefix}nta2020.geojson?boro_id=5`)
+      fetch(`${api_prefix}nta2020.geojson?id=SI____`)
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
