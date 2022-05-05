@@ -48,7 +48,6 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         h3_index = request.args.get('h3_index', None, int)
         k = request.args.get('k', None, int)
         nta2020_id = request.args.get('nta2020_id', None, str)
-        boro_id = request.args.get('boro_id', None, int)
         only_water = request.args.get('only_water', None, bool)
         return make_geojson_response(H3Service.get_h3(h3_index, k, nta2020_id, only_water))
 
