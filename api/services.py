@@ -20,13 +20,18 @@ class BoroService:
 
 class CollisionService:
     @staticmethod
-    def get_collision(id: Optional[int], h3_index: Optional[int], nta2020_id: Optional[str], start_date: Optional[date],
-                      end_date: Optional[date]) -> list[Collision]:
+    def get_collision(id: Optional[int], h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
+                      start_date: Optional[date], end_date: Optional[date]) -> list[Collision]:
         query = Collision.query
         if id is not None:
             query = query.filter(Collision.id == id)
         if h3_index is not None:
-            query = query.filter(Collision.h3_index == h3_index)
+            if k is None or k == 0:
+                query = query.filter(Collision.h3_index == h3_index)
+            else:
+                query = query.filter(Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+        elif k is not None:
+            raise ValueError('k cannot be specified without h3_index.')
         if nta2020_id is not None:
             query = query.filter(Collision.nta2020_id.like(nta2020_id))
         if start_date is not None:
