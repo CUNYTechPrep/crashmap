@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 from shapely.geometry.base import BaseGeometry
 from smart_open import register_compressor, smart_open
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, sql
 from sqlalchemy.engine import Engine
 from toolz import compose_left as compose, get, pipe, valmap
 from typing import Any, Callable, Optional, Sequence
@@ -136,7 +136,8 @@ def transform_data_sets(data_sets: dict[str, DataFrame], nyc_geometry: BaseGeome
 def load_data(database_engine: Engine, data_set: dict[str, DataFrame], start_date: Optional[date]) -> None:
     with database_engine.begin() as connection:
         if start_date:
-            connection.execute('DELETE FROM collision WHERE :start <= collision.date', {'start': start_date})
+            connection.execute(sql.text('DELETE FROM collision WHERE :start_date <= collision.date'),
+                               {'start_date': start_date})
         else:
             connection.execute('DELETE FROM collision')
         for table_name, data_frame in data_set.items():
