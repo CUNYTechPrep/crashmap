@@ -57,8 +57,6 @@ class H3Service:
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
             -> list[H3]:
         query = H3.query
-        if h3_index is None and nta2020_id is None:
-            raise ValueError('h3_index or nta2020_id must be provided.')
         if h3_index is not None:
             if k is None or k == 0:
                 query = query.filter(H3.h3_index == h3_index)
