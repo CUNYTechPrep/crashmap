@@ -4,7 +4,7 @@ from flask.json import JSONEncoder
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from models import Boro, Collision, db, H3, NTA2020
 
@@ -39,6 +39,10 @@ class CollisionService:
         if end_date is not None:
             query = query.filter(Collision.date <= end_date)
         return query.all()
+
+    @staticmethod
+    def get_collisions(ids: Sequence) -> list[Collision]:
+        return Collision.query.filter(Collision.id.in_(ids)).all()
 
 
 class CustomEncoder(JSONEncoder):

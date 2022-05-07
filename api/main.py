@@ -51,8 +51,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         only_water = request.args.get('only_water', None, bool)
         return make_geojson_response(H3Service.get_h3(h3_index, k, nta2020_id, only_water))
 
-    @app.route('/api/collision.json', methods=['GET'])
+    @app.route('/api/collision.json', methods=['GET', 'POST'])
     def collision_as_geojson() -> Response:
+        if request.method == 'POST':
+            return jsonify(CollisionService.get_collisions(request.json))
         id = request.args.get('id', None, int)
         h3_index = request.args.get('h3_index', None, int)
         k = request.args.get('k', None, int)
