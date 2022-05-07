@@ -1,0 +1,7 @@
+toolz
+smart-open
+numpy
+pandas
+Shapely
+Rtree
+geopandas
