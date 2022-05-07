@@ -55,9 +55,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def collision_as_geojson() -> Response:
         id = request.args.get('id', None, int)
         h3_index = request.args.get('h3_index', None, int)
+        nta2020_id = request.args.get('nta2020_id', None, str)
         start_date = request.args.get('start_date', None, date.fromisoformat)
         end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(CollisionService.get_collision(id, h3_index, start_date, end_date))
+        return jsonify(CollisionService.get_collision(id, h3_index, nta2020_id, start_date, end_date))
 
     @app.route('/api/h3_summary.json', methods=['GET'])
     def h3_summary_as_json() -> Response:
