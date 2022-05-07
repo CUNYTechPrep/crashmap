@@ -145,16 +145,36 @@ def load_data(database_engine: Engine, data_set: dict[str, DataFrame], start_dat
 
 
 def run() -> None:
-    nyc_geometry = get_nyc_geometry(nyc_geometry_path)
-    database_engine = create_database_engine()
+    try:
+        nyc_geometry = get_nyc_geometry(nyc_geometry_path)
+        print(f'Loaded geometry from {nyc_geometry_path}.')
+    except Exception as error:
+        print(f'Failed to load geometry from {nyc_geometry_path}. {error}')
+        return
+
+    try:
+        database_engine = create_database_engine()
+        print('Created database engine.')
+    except Exception as error:
+        print(f'Failed to create database engine. {error}')
+        return
 
     try:
         last_append_date = get_last_append_date(database_engine)
+        print(f'Found latest data dated {last_append_date}.'
+              if last_append_date
+              else 'The collisions table is empty.')
         data_sets = get_new_data(last_append_date)
+        print(f'{sum(map(len, data_sets.values())):,} row(s) retrieved from NYC OpenData.')
         transformed_data_sets = transform_data_sets(data_sets, nyc_geometry)
+        print(f'Transformed data sets.')
         load_data(database_engine, transformed_data_sets, last_append_date)
+        print(f'New data since {last_append_date.strftime("%x")} have been successfully loaded into the database.')
+    except Exception as error:
+        print(f'An error occurred during the update process: {error}')
     finally:
         database_engine.dispose()
+        print('Disposed database engine.')
 
 
 if __name__ == '__main__':
