@@ -10,9 +10,11 @@ docker-compose.*.yml
 /client/node_modules
 /client/.pnp
 /cient/.pnp.js
+/updater/venv
 
 # Testing
 /api/coverage
+/updater/coverage
 
 # Production
 /client/build
@@ -21,6 +23,7 @@ docker-compose.*.yml
 **/.DS_Store
 /api/__pycache__
 /api/requirements.txt
+/updater/__pycache__
 
 /client/npm-debug.log*
 /client/yarn-debug.log*
