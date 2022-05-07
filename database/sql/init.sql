@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS vehicle (
     public_property_damage VARCHAR,
     public_property_damage_type VARCHAR,
     contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
-    CONSTRAINT fk_vehicle_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id)
+    CONSTRAINT fk_vehicle_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS person (
@@ -91,8 +91,8 @@ CREATE TABLE IF NOT EXISTS person (
     role VARCHAR,
     contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
     sex VARCHAR,
-    CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id),
-    CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
+    CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE,
+    CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id) ON DELETE CASCADE,
     CONSTRAINT ck_vehicle_id_and_dangling_vehicle_id_are_mutually_exclusive
         CHECK (NOT (vehicle_id IS NOT NULL AND dangling_vehicle_id IS NOT NULL))
 );
