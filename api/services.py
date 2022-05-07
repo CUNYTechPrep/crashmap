@@ -117,7 +117,8 @@ class SummaryService:
         else:
             raise ValueError('Invalid combination of parameters provided.')
         sql_statement = f'''SELECT collision.h3_index,
-                                   {SummaryService.COMMON_COLUMNS}
+                                   {SummaryService.COMMON_COLUMNS},
+                                   json_object_agg(DISTINCT collision.id, ARRAY [collision.longitude, collision.latitude]) AS collision_locations
                             FROM collision
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
