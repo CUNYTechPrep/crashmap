@@ -83,7 +83,7 @@ column_name_maps = {'collision': {'collision_id': 'id',
                                'contributing_factor_1': 'contributing_factor_1',
                                'contributing_factor_2': 'contributing_factor_2',
                                'person_sex': 'sex'}}
-url_parameters = valmap(lambda column_name_map: {'$select': ','.join(column_name_map), '$limit': '100000'},
+url_parameters = valmap(lambda column_name_map: {'$select': ','.join(column_name_map), '$limit': '5000000'},
                         column_name_maps)
 
 
