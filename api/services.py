@@ -87,8 +87,8 @@ class NTA2020Service:
 
 
 class SummaryService:
-    COMMON_COLUMNS = '''min(collision.date) AS start_date,
-                        max(collision.date) AS end_date,
+    COMMON_COLUMNS = '''least(min(collision.date), greatest(:start_date, (SELECT min(collision.date) FROM collision))) AS start_date,
+                        greatest(max(collision.date), least(:end_date, (SELECT max(collision.date) FROM collision))) AS end_date,
                         count(DISTINCT collision.id) AS collisions,
                         count(DISTINCT vehicle.id) AS vehicles,
                         count(person.id) AS people,
