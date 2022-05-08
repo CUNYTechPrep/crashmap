@@ -107,7 +107,7 @@ def get_last_append_date(database_engine: Engine) -> Optional[date]:
 
 
 def get_new_data(start_date: date) -> dict[str, DataFrame]:
-    date_filter = {'$where': f'\'{start_date}\' <= crash_date'} if start_date else None
+    date_filter = {'$where': f'\'{start_date}\' <= crash_date'} if start_date else {}
     return {data_set: pipe('%s?%s' % (url, urlencode(url_parameters[data_set] | date_filter)),
                            partial(pd.read_csv, dtype='str'),
                            partial(DataFrame.rename, columns=column_name_maps[data_set]))
