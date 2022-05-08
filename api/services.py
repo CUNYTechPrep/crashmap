@@ -130,8 +130,8 @@ class SummaryService:
                             GROUP BY collision.h3_index
                             ORDER BY collision.h3_index'''
         parameters = {'key': key,
-                      'start_date': start_date or date(1, 1, 1),
-                      'end_date': end_date or date(9999, 12, 31)}
+                      'start_date': start_date,
+                      'end_date': end_date}
         return [*map(dict, db.session.execute(sql_statement, parameters))]
 
     @staticmethod
@@ -157,8 +157,8 @@ class SummaryService:
                             GROUP BY collision.nta2020_id
                             ORDER BY collision.nta2020_id'''
         parameters = {'key': key,
-                      'start_date': start_date or date(1, 1, 1),
-                      'end_date': end_date or date(9999, 12, 31)}
+                      'start_date': start_date,
+                      'end_date': end_date}
         return [*map(dict, db.session.execute(sql_statement, parameters))]
 
     @staticmethod
@@ -178,8 +178,8 @@ class SummaryService:
                             GROUP BY nta2020.boro_id
                             ORDER BY nta2020.boro_id'''
         parameters = {'boro_id': boro_id,
-                      'start_date': start_date or date(1, 1, 1),
-                      'end_date': end_date or date(9999, 12, 31)}
+                      'start_date': start_date,
+                      'end_date': end_date}
         return [*map(dict, db.session.execute(sql_statement, parameters))]
 
     @staticmethod
@@ -189,6 +189,6 @@ class SummaryService:
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
                             WHERE collision.date BETWEEN :start_date AND :end_date'''
-        parameters = {'start_date': start_date or date(1, 1, 1),
-                      'end_date': end_date or date(9999, 12, 31)}
+        parameters = {'start_date': start_date,
+                      'end_date': end_date}
         return [*map(dict, db.session.execute(sql_statement, parameters))]
