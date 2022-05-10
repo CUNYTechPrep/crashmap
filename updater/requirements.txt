@@ -1,3 +1,4 @@
+python-dateutil
 toolz
 smart-open
 numpy
@@ -5,3 +6,5 @@ pandas
 Shapely
 Rtree
 geopandas
+psycopg2-binary
+SQLAlchemy
