@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 from functools import partial
 import geopandas as gpd
 from geopandas import GeoDataFrame
@@ -85,7 +86,7 @@ column_name_maps = {'collision': {'collision_id': 'id',
                                'person_sex': 'sex'}}
 url_parameters = valmap(lambda column_name_map: {'$select': ','.join(column_name_map),
                                                  '$order': 'crash_date',
-                                                 '$limit': '5000000'},
+                                                 '$limit': '1000000'},
                         column_name_maps)
 
 
@@ -106,8 +107,13 @@ def get_last_append_date(database_engine: Engine) -> Optional[date]:
                          .scalar_one_or_none()
 
 
-def get_new_data(start_date: date) -> dict[str, DataFrame]:
-    date_filter = {'$where': f'\'{start_date}\' <= crash_date'} if start_date else {}
+def get_new_data(start_date: Optional[date], duration: Optional[relativedelta] = relativedelta(months=6, weeks=1)) \
+        -> dict[str, DataFrame]:
+    if start_date is None:
+        start_date = date.today() - duration
+    end_date = start_date + duration
+    date_filter = {'$where': f'\'{start_date}\' <= crash_date and '
+                             f'crash_date <= \'{end_date}\''}
     return {data_set: pipe('%s?%s' % (url, urlencode(url_parameters[data_set] | date_filter)),
                            partial(pd.read_csv, dtype='str'),
                            partial(DataFrame.rename, columns=column_name_maps[data_set]))
@@ -167,9 +173,9 @@ def run() -> None:
         data_sets = get_new_data(last_append_date)
         print(f'{sum(map(len, data_sets.values())):,} row(s) retrieved from NYC OpenData.')
         transformed_data_sets = transform_data_sets(data_sets, nyc_geometry)
-        print(f'Transformed data sets.')
+        print(f'Transformed {sum(map(len, transformed_data_sets.values())):,} row(s).')
         load_data(database_engine, transformed_data_sets, last_append_date)
-        print(f'New data since {last_append_date.strftime("%x")} have been successfully loaded into the database.')
+        print(f'{len(transformed_data_sets):,} data set(s) have been successfully loaded into the database.')
     except Exception as error:
         print(f'An error occurred during the update process: {error}')
     finally:
