@@ -126,7 +126,9 @@ class SummaryService:
                             FROM collision
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {key_column} {predicate} :key AND collision.date BETWEEN :start_date AND :end_date
+                            WHERE {key_column} {predicate} :key
+                                  (:start_date IS NULL OR :start_date <= collision.date) AND
+                                  (:end_date IS NULL OR collision.date <= :end_date)
                             GROUP BY collision.h3_index
                             ORDER BY collision.h3_index'''
         parameters = {'key': key,
@@ -153,7 +155,9 @@ class SummaryService:
                             INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {key_column} {predicate} :key AND collision.date BETWEEN :start_date AND :end_date
+                            WHERE {key_column} {predicate} :key
+                                  (:start_date IS NULL OR :start_date <= collision.date) AND
+                                  (:end_date IS NULL OR collision.date <= :end_date)
                             GROUP BY collision.nta2020_id
                             ORDER BY collision.nta2020_id'''
         parameters = {'key': key,
@@ -174,7 +178,9 @@ class SummaryService:
                             INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {predicate} collision.date BETWEEN :start_date AND :end_date
+                            WHERE {predicate}
+                                  (:start_date IS NULL OR :start_date <= collision.date) AND
+                                  (:end_date IS NULL OR collision.date <= :end_date)
                             GROUP BY nta2020.boro_id
                             ORDER BY nta2020.boro_id'''
         parameters = {'boro_id': boro_id,
@@ -188,7 +194,8 @@ class SummaryService:
                             FROM collision
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE collision.date BETWEEN :start_date AND :end_date'''
+                            WHERE (:start_date IS NULL OR :start_date <= collision.date) AND
+                                  (:end_date IS NULL OR collision.date <= :end_date)'''
         parameters = {'start_date': start_date,
                       'end_date': end_date}
         return [*map(dict, db.session.execute(sql_statement, parameters))]
