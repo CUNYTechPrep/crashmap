@@ -145,6 +145,8 @@ def load_data(database_engine: Engine, data_set: dict[str, DataFrame], start_dat
             connection.execute(sql.text('DELETE FROM collision WHERE :start_date <= collision.date'),
                                {'start_date': start_date})
         else:
+            connection.execute('DELETE FROM person')
+            connection.execute('DELETE FROM vehicle')
             connection.execute('DELETE FROM collision')
         for table_name, data_frame in data_set.items():
             data_frame.to_sql(table_name, connection, if_exists='append', method='multi')
