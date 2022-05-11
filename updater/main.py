@@ -12,7 +12,7 @@ from shapely.geometry.base import BaseGeometry
 from smart_open import register_compressor, smart_open
 from sqlalchemy import create_engine, sql
 from sqlalchemy.engine import Engine
-from toolz import compose_left as compose, get, pipe, valmap
+from toolz import compose_left as compose, first, get, juxt, last, pipe, valmap
 from typing import Any, Callable, Optional, Sequence
 from urllib.parse import urlencode
 
@@ -139,17 +139,14 @@ def transform_data_sets(data_sets: dict[str, DataFrame], nyc_geometry: BaseGeome
     return {'collision': collision, 'vehicle': vehicle, 'person': person}
 
 
-def load_data(database_engine: Engine, data_set: dict[str, DataFrame], start_date: Optional[date]) -> None:
-    with database_engine.begin() as connection:
-        if start_date:
-            connection.execute(sql.text('DELETE FROM collision WHERE :start_date <= collision.date'),
-                               {'start_date': start_date})
-        else:
-            connection.execute('DELETE FROM person')
-            connection.execute('DELETE FROM vehicle')
-            connection.execute('DELETE FROM collision')
-        for table_name, data_frame in data_set.items():
-            data_frame.to_sql(table_name, connection, if_exists='append', method='multi')
+def load_data(database_engine: Engine, data_set: dict[str, DataFrame]) -> None:
+    start_date, end_date = juxt(first, last)(data_set['collision'].date)
+    if start_date:
+        with database_engine.begin() as connection:
+            connection.execute(sql.text('DELETE FROM collision WHERE daterange(:from, :to, \'[]\') @> collision.date'),
+                               {'from': start_date, 'to': end_date})
+            for table_name, data_frame in data_set.items():
+                data_frame.to_sql(table_name, connection, if_exists='append', method='multi')
 
 
 def run() -> None:
@@ -176,7 +173,7 @@ def run() -> None:
         print(f'{sum(map(len, data_sets.values())):,} row(s) retrieved from NYC OpenData.')
         transformed_data_sets = transform_data_sets(data_sets, nyc_geometry)
         print(f'Transformed {sum(map(len, transformed_data_sets.values())):,} row(s).')
-        load_data(database_engine, transformed_data_sets, last_append_date)
+        load_data(database_engine, transformed_data_sets)
         print(f'{len(transformed_data_sets):,} data set(s) have been successfully loaded into the database.')
     except Exception as error:
         print(f'An error occurred during the update process: {error}')
