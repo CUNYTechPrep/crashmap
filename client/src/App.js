@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import Map from "./components/Map/Map.js";
 import Filter from "./components/Filter/Filter.js";
+import Overview from "./components/Filter/Overview.js";
 import { Container } from "react-bootstrap";
 
 import "./App.css";
@@ -22,16 +23,37 @@ class App extends Component {
   render() {
     return (
       <Container className="mt-5">
-        <div id="hero">
-          <Filter
+       
+
+        <div className="container mt-5">
+        <Overview className="" selectedBorough={this.state.selectedBorough}/>
+        <div className="row">
+        <div className="col-9">
+          
+          <div id="hero">
+         
+         <Map 
+           handleBoroughChange={this.handleBoroughChange.bind(this)}
+         selectedBorough={this.state.selectedBorough} />
+        
+       </div>
+       
+          </div>
+          <div className="col-3">
+          <Filter 
             handleBoroughChange={this.handleBoroughChange.bind(this)}
             selectedBorough={this.state.selectedBorough}
           />
-          <Map
-            handleBoroughChange={this.handleBoroughChange.bind(this)}
-            selectedBorough={this.state.selectedBorough}
-          />
-        </div>
+          </div>
+        
+      
+         
+          </div>
+        
+          
+       </div>
+     
+       
       </Container>
     );
   }

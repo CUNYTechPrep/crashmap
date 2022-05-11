@@ -13,7 +13,7 @@ class Map extends Component {
       lng: -73.98331400778511,
       lat: 40.70363951429806,
       zoom: 9.5,
-      boroughHoveredStateId: null,
+      hoveredStateId: null,
     };
     this.mapContainer = React.createRef();
   }
@@ -116,6 +116,7 @@ class Map extends Component {
           data.features.forEach((feature) => {
             feature.id = 3;
           });
+          console.dir(data);
           if (!this.map.getSource("brooklyn")) {
             this.map.addSource("brooklyn", {
               type: "geojson",
@@ -252,20 +253,19 @@ class Map extends Component {
     ];
     // add hover event listeners for each borough
     for (const name of boroughNames) {
-      // hover for borough
       this.map.on("mousemove", `${name}-fill`, (e) => {
         this.map.getCanvas().style.cursor = "pointer";
         if (e.features.length > 0) {
-          if (this.state.boroughHoveredStateId !== null) {
+          if (this.state.hoveredStateId !== null) {
             this.map.setFeatureState(
-              { source: name, id: this.state.boroughHoveredStateId },
+              { source: name, id: this.state.hoveredStateId },
               { hover: false }
             );
           }
           // console.log("inside mousemove " + name);
-          this.setState({ boroughHoveredStateId: e.features[0].id });
+          this.setState({ hoveredStateId: e.features[0].id });
           this.map.setFeatureState(
-            { source: name, id: this.state.boroughHoveredStateId },
+            { source: name, id: this.state.hoveredStateId },
             { hover: true }
           );
         }
@@ -273,31 +273,29 @@ class Map extends Component {
       this.map.on("mouseleave", `${name}-fill`, () => {
         // console.log("inside mouseleave " + name);
         this.map.getCanvas().style.cursor = "";
-        if (this.state.boroughHoveredStateId !== null) {
+        if (this.state.hoveredStateId !== null) {
           this.map.setFeatureState(
-            { source: name, id: this.state.boroughHoveredStateId },
+            { source: name, id: this.state.hoveredStateId },
             { hover: false }
           );
         }
-        this.setState({ boroughHoveredStateId: null });
+        this.setState({ hoveredStateId: null });
       });
-
-      // add popup label for neighborhoods
-
       this.map.on("click", `${name}-fill`, (e) => {
         const boroughCenters = [
-          { name: "bronx", lng: "-73.865433", lat: "40.8448" },
-          { name: "brooklyn", lng: "-73.9442", lat: "40.6782" },
-          { name: "queens", lng: "-73.7949", lat: "40.7282" },
-          { name: "manhattan", lng: "-73.9712", lat: "40.7831" },
+          { value: 2, label: 'bronx', lng: '-73.865433', lat: '40.8448' },
+          { value: 3, label: 'brooklyn', lng: '-73.9442', lat: '40.6782' },
+          { value: 4, label: 'queens', lng: '-73.7949', lat: '40.7282' },
+          { value: 1, label: 'manhattan', lng: '-73.9712', lat: '40.7831' },
           {
-            name: "statenIsland",
-            lng: "-74.1502",
-            lat: "40.5795",
+            value: 5,
+            label: 'statenIsland',
+            lng: '-74.1502',
+            lat: '40.5795',
           },
         ];
         for (const center of boroughCenters) {
-          if (center.name === name) this.props.handleBoroughChange(center);
+          if (center.label === name) this.props.handleBoroughChange(center);
         }
       });
     }
@@ -409,7 +407,7 @@ class Map extends Component {
       const lng = this.props.selectedBorough.lng;
       const lat = this.props.selectedBorough.lat;
       // eslint-disable-next-line default-case
-      switch (this.props.selectedBorough.name) {
+      switch (this.props.selectedBorough.label) {
         case "bronx":
           this.map.addLayer({
             id: "bronx-line",
@@ -418,16 +416,6 @@ class Map extends Component {
             paint: {
               "line-color": "#C07862",
               "line-width": 2,
-            },
-          });
-          this.map.removeLayer("bronx-fill");
-          this.map.addLayer({
-            id: "bronx-neighborhoods-fill",
-            type: "fill",
-            source: "bronx-neighborhoods",
-            paint: {
-              "fill-color": "#C0A762",
-              "fill-opacity": 0.7,
             },
           });
           break;
@@ -441,16 +429,6 @@ class Map extends Component {
               "line-width": 2,
             },
           });
-          this.map.removeLayer("brooklyn-fill");
-          this.map.addLayer({
-            id: "brooklyn-neighborhoods-fill",
-            type: "fill",
-            source: "brooklyn-neighborhoods",
-            paint: {
-              "fill-color": "#627BC1",
-              "fill-opacity": 0.7,
-            },
-          });
           break;
         case "manhattan":
           this.map.addLayer({
@@ -458,18 +436,8 @@ class Map extends Component {
             type: "line",
             source: "manhattan",
             paint: {
-              "line-color": "#64B247",
+              "line-color": "#62B382",
               "line-width": 2,
-            },
-          });
-          this.map.removeLayer("manhattan-fill");
-          this.map.addLayer({
-            id: "manhattan-neighborhoods-fill",
-            type: "fill",
-            source: "manhattan-neighborhoods",
-            paint: {
-              "fill-color": "#64B247",
-              "fill-opacity": 0.7,
             },
           });
           break;
@@ -483,16 +451,6 @@ class Map extends Component {
               "line-width": 2,
             },
           });
-          this.map.removeLayer("queens-fill");
-          this.map.addLayer({
-            id: "queens-neighborhoods-fill",
-            type: "fill",
-            source: "queens-neighborhoods",
-            paint: {
-              "fill-color": "#C062AA",
-              "fill-opacity": 0.7,
-            },
-          });
           break;
         case "statenIsland":
           this.map.addLayer({
@@ -502,16 +460,6 @@ class Map extends Component {
             paint: {
               "line-color": "#C0A762",
               "line-width": 2,
-            },
-          });
-          this.map.removeLayer("statenIsland-fill");
-          this.map.addLayer({
-            id: "statenIsland-neighborhoods-fill",
-            type: "fill",
-            source: "statenIsland-neighborhoods",
-            paint: {
-              "fill-color": "#C0A762",
-              "fill-opacity": 0.7,
             },
           });
           break;

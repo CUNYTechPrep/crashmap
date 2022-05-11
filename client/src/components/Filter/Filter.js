@@ -4,16 +4,16 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import "./styles.css";
 
-const boroughOptions = [
-  { value: "bronx", label: "BRONX", lng: "-73.865433", lat: "40.8448" },
-  { value: "brooklyn", label: "BROOKLYN", lng: "-73.9442", lat: "40.6782" },
-  { value: "queens", label: "QUEENS", lng: "-73.7949", lat: "40.7282" },
-  { value: "manhattan", label: "MANHATTAN", lng: "-73.9712", lat: "40.7831" },
+const options = [
+  { value: 2, label: 'Bronx', lng: '-73.865433', lat: '40.8448' },
+  { value: 3, label: 'Brooklyn', lng: '-73.9442', lat: '40.6782' },
+  { value: 4, label: 'Queens', lng: '-73.7949', lat: '40.7282' },
+  { value: 1, label: 'Manhattan', lng: '-73.9712', lat: '40.7831' },
   {
-    value: "statenIsland",
-    label: "STATEN ISLAND",
-    lng: "-74.1502",
-    lat: "40.5795",
+    value: 5,
+    label: 'Staten Island',
+    lng: '-74.1502',
+    lat: '40.5795',
   },
 ];
 
@@ -30,29 +30,29 @@ class Filter extends Component {
 
   render() {
     return (
-      <Row id="filter">
-        <Col xs={2}>
-          {/* Borough Dropdown */}
-          <Select
+      <div>
+        <div className='option border border-3 border-primary rounded  p-3 mb-3'>
+          <div className='card row'>
+            <ul className=' list-group list-group-flush'>
+              <div className='col'></div>
+      <li className='list-group-item' >
+       <p>View Neighborhood Boundaries</p>
+       <Select
             value={this.props.selectedBorough}
             onChange={this.props.handleBoroughChange}
-            options={boroughOptions}
+            options={options}
           />
-          {/* TODO: include h3 borough options */}
-        </Col>
-        <Col xs={2}>
-          <button className="btn btn-primary" onClick={this.currentBorough}>
+            <button className='btn btn-primary' onClick={this.currentBorough}>
             Enter city
           </button>
-
-          {/* Neighborhood Dropdown */}
-          {/* <select name="" id="" className="w-5">
-            <option value="" disabled selected hidden>
-              Neighborhood
-            </option>
-          </select> */}
-        </Col>
-      </Row>
+  
+       
+      </li>
+      </ul>
+   
+      </div>
+      </div>
+      </div>
     );
   }
 }
