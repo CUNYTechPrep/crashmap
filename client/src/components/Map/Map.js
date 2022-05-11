@@ -14,7 +14,6 @@ class Map extends Component {
       lat: 40.70363951429806,
       zoom: 9.5,
       boroughHoveredStateId: null,
-      neighborhoodHoveredStateId: null,
     };
     this.mapContainer = React.createRef();
   }
@@ -117,7 +116,6 @@ class Map extends Component {
           data.features.forEach((feature) => {
             feature.id = 3;
           });
-          console.dir(data);
           if (!this.map.getSource("brooklyn")) {
             this.map.addSource("brooklyn", {
               type: "geojson",
@@ -284,36 +282,8 @@ class Map extends Component {
         this.setState({ boroughHoveredStateId: null });
       });
 
-      // hover for borough's neighborhoods
-      this.map.on("mousemove", `${name}-neighborhoods-fill`, (e) => {
-        // console.log(`inside ${name}'s neighborhoods`);
-        console.dir(e.features);
-        this.map.getCanvas().style.cursor = "pointer";
-        if (e.features.length > 0) {
-          if (this.state.neighborhoodHoveredStateId !== null) {
-            this.map.setFeatureState(
-              { source: name, id: this.state.neighborhoodHoveredStateId },
-              { hover: false }
-            );
-          }
-          this.setState({ neighborhoodHoveredStateId: e.features[0].id });
-          this.map.setFeatureState(
-            { source: name, id: this.state.neighborhoodHoveredStateId },
-            { hover: true }
-          );
-        }
-      });
-      this.map.on("mouseleave", `${name}-neighborhoods-fill`, () => {
-        // console.log(`outside ${name}'s neighborhoods`);
-        this.map.getCanvas().style.cursor = "";
-        if (this.state.neighborhoodHoveredStateId !== null) {
-          this.map.setFeatureState(
-            { source: name, id: this.state.neighborhoodHoveredStateId },
-            { hover: false }
-          );
-        }
-        this.setState({ neighborhoodHoveredStateId: null });
-      });
+      // add popup label for neighborhoods
+
       this.map.on("click", `${name}-fill`, (e) => {
         const boroughCenters = [
           { name: "bronx", lng: "-73.865433", lat: "40.8448" },
@@ -457,12 +427,7 @@ class Map extends Component {
             source: "bronx-neighborhoods",
             paint: {
               "fill-color": "#C0A762",
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.7,
-                0.6,
-              ],
+              "fill-opacity": 0.7,
             },
           });
           break;
@@ -483,12 +448,7 @@ class Map extends Component {
             source: "brooklyn-neighborhoods",
             paint: {
               "fill-color": "#627BC1",
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.7,
-                0.6,
-              ],
+              "fill-opacity": 0.7,
             },
           });
           break;
@@ -509,12 +469,7 @@ class Map extends Component {
             source: "manhattan-neighborhoods",
             paint: {
               "fill-color": "#64B247",
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.7,
-                0.6,
-              ],
+              "fill-opacity": 0.7,
             },
           });
           break;
@@ -535,12 +490,7 @@ class Map extends Component {
             source: "queens-neighborhoods",
             paint: {
               "fill-color": "#C062AA",
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.7,
-                0.6,
-              ],
+              "fill-opacity": 0.7,
             },
           });
           break;
@@ -561,12 +511,7 @@ class Map extends Component {
             source: "statenIsland-neighborhoods",
             paint: {
               "fill-color": "#C0A762",
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.7,
-                0.6,
-              ],
+              "fill-opacity": 0.7,
             },
           });
           break;
