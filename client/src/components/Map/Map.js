@@ -10,9 +10,10 @@ class Map extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      lng: -73.9066,
-      lat: 40.7294,
+      lng: -73.98331400778511,
+      lat: 40.70363951429806,
       zoom: 9.5,
+      hoveredStateId: null,
     };
     this.mapContainer = React.createRef();
   }
@@ -25,7 +26,8 @@ class Map extends Component {
     // make map variable available outside of componentDidMount
     this.map = new mapboxgl.Map({
       container: this.mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
+      // style: "mapbox://styles/mapbox/streets-v11",
+      style: "mapbox://styles/seanyap/cl31wio02000615ntvwn1rvd0",
       center: [lng, lat],
       zoom: zoom,
     });
@@ -36,11 +38,36 @@ class Map extends Component {
       fetch(`${api_prefix}nta2020.geojson?id=MN____`)
         .then((res) => res.json())
         .then((data) => {
+          const cloneData = JSON.parse(JSON.stringify(data));
+          data.features.forEach((feature) => {
+            feature.id = 1;
+          });
           // console.dir(data);
           if (!this.map.getSource("manhattan")) {
             this.map.addSource("manhattan", {
               type: "geojson",
               data: data,
+            });
+            this.map.addLayer({
+              id: "manhattan-fill",
+              type: "fill",
+              source: "manhattan",
+              paint: {
+                "fill-color": "#64B247",
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.7,
+                  0.6,
+                ],
+              },
+            });
+          }
+          if (!this.map.getSource("manhattan-neighborhoods")) {
+            this.map.addSource("manhattan-neighborhoods", {
+              type: "geojson",
+              data: cloneData,
+              generateId: true,
             });
           }
         });
@@ -48,11 +75,36 @@ class Map extends Component {
       fetch(`${api_prefix}nta2020.geojson?id=BX____`)
         .then((res) => res.json())
         .then((data) => {
+          const cloneData = JSON.parse(JSON.stringify(data));
+          data.features.forEach((feature) => {
+            feature.id = 2;
+          });
           // console.dir(data);
           if (!this.map.getSource("bronx")) {
             this.map.addSource("bronx", {
               type: "geojson",
               data: data,
+            });
+            this.map.addLayer({
+              id: "bronx-fill",
+              type: "fill",
+              source: "bronx",
+              paint: {
+                "fill-color": "#C07862",
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.7,
+                  0.6,
+                ],
+              },
+            });
+          }
+          if (!this.map.getSource("bronx-neighborhoods")) {
+            this.map.addSource("bronx-neighborhoods", {
+              type: "geojson",
+              data: cloneData,
+              generateId: true,
             });
           }
         });
@@ -60,11 +112,36 @@ class Map extends Component {
       fetch(`${api_prefix}nta2020.geojson?id=BK____`)
         .then((res) => res.json())
         .then((data) => {
-          // console.dir(data);
+          const cloneData = JSON.parse(JSON.stringify(data));
+          data.features.forEach((feature) => {
+            feature.id = 3;
+          });
+          console.dir(data);
           if (!this.map.getSource("brooklyn")) {
             this.map.addSource("brooklyn", {
               type: "geojson",
               data: data,
+            });
+            this.map.addLayer({
+              id: "brooklyn-fill",
+              type: "fill",
+              source: "brooklyn",
+              paint: {
+                "fill-color": "#627BC1",
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.7,
+                  0.6,
+                ],
+              },
+            });
+          }
+          if (!this.map.getSource("brooklyn-neighborhoods")) {
+            this.map.addSource("brooklyn-neighborhoods", {
+              type: "geojson",
+              data: cloneData,
+              generateId: true,
             });
           }
         });
@@ -73,10 +150,35 @@ class Map extends Component {
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
+          const cloneData = JSON.parse(JSON.stringify(data));
+          data.features.forEach((feature) => {
+            feature.id = 4;
+          });
           if (!this.map.getSource("queens")) {
             this.map.addSource("queens", {
               type: "geojson",
               data: data,
+            });
+            this.map.addLayer({
+              id: "queens-fill",
+              type: "fill",
+              source: "queens",
+              paint: {
+                "fill-color": "#C062AA",
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.7,
+                  0.6,
+                ],
+              },
+            });
+          }
+          if (!this.map.getSource("queens-neighborhoods")) {
+            this.map.addSource("queens-neighborhoods", {
+              type: "geojson",
+              data: cloneData,
+              generateId: true,
             });
           }
         });
@@ -85,44 +187,112 @@ class Map extends Component {
         .then((res) => res.json())
         .then((data) => {
           // console.dir(data);
+          const cloneData = JSON.parse(JSON.stringify(data));
+          data.features.forEach((feature) => {
+            feature.id = 5;
+          });
           if (!this.map.getSource("statenIsland")) {
             this.map.addSource("statenIsland", {
               type: "geojson",
               data: data,
             });
+            this.map.addLayer({
+              id: "statenIsland-fill",
+              type: "fill",
+              source: "statenIsland",
+              paint: {
+                "fill-color": "#C0A762",
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.7,
+                  0.6,
+                ],
+              },
+            });
+          }
+          if (!this.map.getSource("statenIsland-neighborhoods")) {
+            this.map.addSource("statenIsland-neighborhoods", {
+              type: "geojson",
+              data: cloneData,
+              generateId: true,
+            });
           }
         });
 
-      // add 5 boroughs source
-      // this.map.addSource("nyc-boroughs", {
-      //   type: "geojson",
-      //   data: boroughs,
-      // });
-
-      // add neighborhoods
-
-      // add 5 boroughs layer
-      // this.map.addLayer({
-      //   id: "boroughs-viz",
-      //   type: "fill",
-      //   source: "nyc-boroughs",
-      //   paint: {
-      //     "fill-color": "#9ebcda",
-      //   },
-      // });
+      // h3 hexagon /api/h3.geojson
+      // fetch(`${api_prefix}h3.geojson?nta2020_id=MN`)
+      //   .then((res) => res.json())
+      //   .then((data) => {
+      //     // console.dir(data);
+      //     if (!this.map.getSource("h3")) {
+      //       this.map.addSource("h3", {
+      //         type: "geojson",
+      //         data: data,
+      //       });
+      //     }
+      //     if (!this.map.getLayer("h3-viz"))
+      //       this.map.addLayer({
+      //         id: "h3-viz",
+      //         type: "line",
+      //         source: "h3",
+      //       });
+      //   });
     });
 
     this.map.once("load", () => {
       this.map.resize();
     });
+
+    const boroughNames = [
+      "bronx",
+      "brooklyn",
+      "manhattan",
+      "queens",
+      "statenIsland",
+    ];
+    // add hover event listeners for each borough
+    for (const name of boroughNames) {
+      this.map.on("mousemove", `${name}-fill`, (e) => {
+        this.map.getCanvas().style.cursor = "pointer";
+        if (e.features.length > 0) {
+          if (this.state.hoveredStateId !== null) {
+            this.map.setFeatureState(
+              { source: name, id: this.state.hoveredStateId },
+              { hover: false }
+            );
+          }
+          // console.log("inside mousemove " + name);
+          this.setState({ hoveredStateId: e.features[0].id });
+          this.map.setFeatureState(
+            { source: name, id: this.state.hoveredStateId },
+            { hover: true }
+          );
+        }
+      });
+      this.map.on("mouseleave", `${name}-fill`, () => {
+        // console.log("inside mouseleave " + name);
+        this.map.getCanvas().style.cursor = "";
+        if (this.state.hoveredStateId !== null) {
+          this.map.setFeatureState(
+            { source: name, id: this.state.hoveredStateId },
+            { hover: false }
+          );
+        }
+        this.setState({ hoveredStateId: null });
+      });
+      this.map.on("click", `${name}-fill`, (e) => {
+        console.log(`${name} clicked`);
+      });
+    }
   }
 
   removeAllMapLayers(map) {
-    if (map.getLayer("bronx-viz")) map.removeLayer("bronx-viz");
-    if (map.getLayer("brooklyn-viz")) map.removeLayer("brooklyn-viz");
-    if (map.getLayer("manhattan-viz")) map.removeLayer("manhattan-viz");
-    if (map.getLayer("queens-viz")) map.removeLayer("queens-viz");
-    if (map.getLayer("statenIsland-viz")) map.removeLayer("statenIsland-viz");
+    if (map.getLayer("bronx-line")) map.removeLayer("bronx-line");
+    if (map.getLayer("brooklyn-line")) map.removeLayer("brooklyn-line");
+    if (map.getLayer("manhattan-line")) map.removeLayer("manhattan-line");
+    if (map.getLayer("queens-line")) map.removeLayer("queens-line");
+    if (map.getLayer("statenIsland-line")) map.removeLayer("statenIsland-line");
   }
 
   componentDidUpdate(prevProps) {
@@ -136,37 +306,57 @@ class Map extends Component {
       switch (this.props.selectedBorough.value) {
         case "Bronx":
           this.map.addLayer({
-            id: "bronx-viz",
+            id: "bronx-line",
             type: "line",
             source: "bronx",
+            paint: {
+              "line-color": "#C07862",
+              "line-width": 2,
+            },
           });
           break;
         case "Brooklyn":
           this.map.addLayer({
-            id: "brooklyn-viz",
+            id: "brooklyn-line",
             type: "line",
             source: "brooklyn",
+            paint: {
+              "line-color": "#627BC1",
+              "line-width": 2,
+            },
           });
           break;
         case "Manhattan":
           this.map.addLayer({
-            id: "manhattan-viz",
+            id: "manhattan-line",
             type: "line",
             source: "manhattan",
+            paint: {
+              "line-color": "#62B382",
+              "line-width": 2,
+            },
           });
           break;
         case "Queens":
           this.map.addLayer({
-            id: "queens-viz",
+            id: "queens-line",
             type: "line",
             source: "queens",
+            paint: {
+              "line-color": "#C062AA",
+              "line-width": 2,
+            },
           });
           break;
         case "Staten Island":
           this.map.addLayer({
-            id: "statenIsland-viz",
+            id: "statenIsland-line",
             type: "line",
             source: "statenIsland",
+            paint: {
+              "line-color": "#C0A762",
+              "line-width": 2,
+            },
           });
           break;
       }
