@@ -12,7 +12,7 @@ from shapely.geometry.base import BaseGeometry
 from smart_open import register_compressor, smart_open
 from sqlalchemy import create_engine, sql
 from sqlalchemy.engine import Engine
-from toolz import compose_left as compose, first, get, juxt, last, pipe, valmap
+from toolz import compose_left as compose, get, juxt, pipe, valmap
 from typing import Any, Callable, Optional, Sequence
 from urllib.parse import urlencode
 
@@ -140,10 +140,12 @@ def transform_data_sets(data_sets: dict[str, DataFrame], nyc_geometry: BaseGeome
 
 
 def load_data(database_engine: Engine, data_set: dict[str, DataFrame]) -> None:
-    start_date, end_date = juxt(first, last)(data_set['collision'].date)
-    if start_date:
+    start_date, end_date = pipe(data_set['collision'].date,
+                                pd.to_datetime,
+                                juxt(Series.min, Series.max))
+    if not pd.isna(start_date):
         with database_engine.begin() as connection:
-            connection.execute(sql.text('DELETE FROM collision WHERE daterange(:from, :to, \'[]\') @> collision.date'),
+            connection.execute(sql.text('DELETE FROM collision WHERE collision.date BETWEEN :from AND :to'),
                                {'from': start_date, 'to': end_date})
             for table_name, data_frame in data_set.items():
                 data_frame.to_sql(table_name, connection, if_exists='append', method='multi')
