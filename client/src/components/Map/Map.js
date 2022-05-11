@@ -282,7 +282,20 @@ class Map extends Component {
         this.setState({ hoveredStateId: null });
       });
       this.map.on("click", `${name}-fill`, (e) => {
-        console.log(`${name} clicked`);
+        const boroughCenters = [
+          { value: "bronx", lng: "-73.865433", lat: "40.8448" },
+          { value: "brooklyn", lng: "-73.9442", lat: "40.6782" },
+          { value: "queens", lng: "-73.7949", lat: "40.7282" },
+          { value: "manhattan", lng: "-73.9712", lat: "40.7831" },
+          {
+            value: "statenIsland",
+            lng: "-74.1502",
+            lat: "40.5795",
+          },
+        ];
+        for (const center of boroughCenters) {
+          if (center.value === name) this.props.handleBoroughChange(center);
+        }
       });
     }
   }
@@ -304,7 +317,7 @@ class Map extends Component {
       const lat = this.props.selectedBorough.lat;
       // eslint-disable-next-line default-case
       switch (this.props.selectedBorough.value) {
-        case "Bronx":
+        case "bronx":
           this.map.addLayer({
             id: "bronx-line",
             type: "line",
@@ -315,7 +328,7 @@ class Map extends Component {
             },
           });
           break;
-        case "Brooklyn":
+        case "brooklyn":
           this.map.addLayer({
             id: "brooklyn-line",
             type: "line",
@@ -326,7 +339,7 @@ class Map extends Component {
             },
           });
           break;
-        case "Manhattan":
+        case "manhattan":
           this.map.addLayer({
             id: "manhattan-line",
             type: "line",
@@ -337,7 +350,7 @@ class Map extends Component {
             },
           });
           break;
-        case "Queens":
+        case "queens":
           this.map.addLayer({
             id: "queens-line",
             type: "line",
@@ -348,7 +361,7 @@ class Map extends Component {
             },
           });
           break;
-        case "Staten Island":
+        case "statenIsland":
           this.map.addLayer({
             id: "statenIsland-line",
             type: "line",

@@ -27,7 +27,10 @@ class App extends Component {
             handleBoroughChange={this.handleBoroughChange.bind(this)}
             selectedBorough={this.state.selectedBorough}
           />
-          <Map selectedBorough={this.state.selectedBorough} />
+          <Map
+            handleBoroughChange={this.handleBoroughChange.bind(this)}
+            selectedBorough={this.state.selectedBorough}
+          />
         </div>
       </Container>
     );
