@@ -1,6 +1,7 @@
 from datetime import date, time
 from os import getenv
 from flask import Flask, jsonify, make_response, request, Response
+from typing import Any
 
 from models import db
 from services import BoroService, CollisionService, CustomEncoder, H3Service, NTA2020Service, SummaryService
@@ -20,6 +21,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     db.init_app(app)
 
+    def get_all_request_args(expected_args: dict[str, Any]) -> dict[str, Any]:
+        return {key: request.args.get(key, None, type)
+                for key, type in expected_args.items()}
+
     def make_geojson_response(obj: dict | list) -> Response:
         response = make_response({'type': 'FeatureCollection',
                                   'features': obj}
@@ -34,64 +39,63 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
-        id = request.args.get('id', None, int)
-        return make_geojson_response(BoroService.get_boro(id))
+        return make_geojson_response(BoroService.get_boro(request.args.get('id', None, int)))
 
     @app.route('/api/nta2020.geojson', methods=['GET'])
     def nta2020_as_geojson() -> Response:
-        id = request.args.get('id', None, str)
-        boro_id = request.args.get('boro_id', None, int)
-        return make_geojson_response(NTA2020Service.get_nta2020(id, boro_id))
+        arguments = get_all_request_args({'id': str,
+                                          'boro_id': int})
+        return make_geojson_response(NTA2020Service.get_nta2020(**arguments))
 
     @app.route('/api/h3.geojson', methods=['GET'])
     def h3_as_geojson() -> Response:
-        h3_index = request.args.get('h3_index', None, int)
-        k = request.args.get('k', None, int)
-        nta2020_id = request.args.get('nta2020_id', None, str)
-        only_water = request.args.get('only_water', None, bool)
-        return make_geojson_response(H3Service.get_h3(h3_index, k, nta2020_id, only_water))
+        arguments = get_all_request_args({'h3_index': int,
+                                          'k': int,
+                                          'nta2020_id': str,
+                                          'only_water': bool})
+        return make_geojson_response(H3Service.get_h3(**arguments))
 
     @app.route('/api/collision.json', methods=['GET', 'POST'])
     def collision_as_geojson() -> Response:
         if request.method == 'POST':
             return jsonify(CollisionService.get_collisions(request.json))
-        id = request.args.get('id', None, int)
-        h3_index = request.args.get('h3_index', None, int)
-        k = request.args.get('k', None, int)
-        nta2020_id = request.args.get('nta2020_id', None, str)
-        start_date = request.args.get('start_date', None, date.fromisoformat)
-        end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(CollisionService.get_collision(id, h3_index, k, nta2020_id, start_date, end_date))
+        arguments = get_all_request_args({'id': int,
+                                          'h3_index': int,
+                                          'k': int,
+                                          'nta2020_id': str,
+                                          'start_date': date.fromisoformat,
+                                          'end_date': date.fromisoformat})
+        return jsonify(CollisionService.get_collision(**arguments))
 
     @app.route('/api/h3_summary.json', methods=['GET'])
     def h3_summary_as_json() -> Response:
-        h3_index = request.args.get('h3_index', None, int)
-        k = request.args.get('k', None, int)
-        nta2020_id = request.args.get('nta2020_id', None, str)
-        start_date = request.args.get('start_date', None, date.fromisoformat)
-        end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(SummaryService.get_h3_summary(h3_index, k, nta2020_id, start_date, end_date))
+        arguments = get_all_request_args({'h3_index': int,
+                                          'k': int,
+                                          'nta2020_id': str,
+                                          'start_date': date.fromisoformat,
+                                          'end_date': date.fromisoformat})
+        return jsonify(SummaryService.get_h3_summary(**arguments))
 
     @app.route('/api/nta2020_summary.json', methods=['GET'])
     def nta2020_summary_as_json() -> Response:
-        nta2020_id = request.args.get('nta2020_id', None, str)
-        boro_id = request.args.get('boro_id', None, int)
-        start_date = request.args.get('start_date', None, date.fromisoformat)
-        end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(SummaryService.get_nta2020_summary(nta2020_id, boro_id, start_date, end_date))
+        arguments = get_all_request_args({'nta2020_id': str,
+                                          'boro_id': int,
+                                          'start_date': date.fromisoformat,
+                                          'end_date': date.fromisoformat})
+        return jsonify(SummaryService.get_nta2020_summary(**arguments))
 
     @app.route('/api/boro_summary.json', methods=['GET'])
     def boro_summary_as_json() -> Response:
-        boro_id = request.args.get('boro_id', None, int)
-        start_date = request.args.get('start_date', None, date.fromisoformat)
-        end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(SummaryService.get_boro_summary(boro_id, start_date, end_date))
+        arguments = get_all_request_args({'boro_id': int,
+                                          'start_date': date.fromisoformat,
+                                          'end_date': date.fromisoformat})
+        return jsonify(SummaryService.get_boro_summary(**arguments))
 
     @app.route('/api/city_summary.json', methods=['GET'])
     def city_summary_as_json() -> Response:
-        start_date = request.args.get('start_date', None, date.fromisoformat)
-        end_date = request.args.get('end_date', None, date.fromisoformat)
-        return jsonify(SummaryService.get_summary(start_date, end_date))
+        arguments = get_all_request_args({'start_date': date.fromisoformat,
+                                          'end_date': date.fromisoformat})
+        return jsonify(SummaryService.get_summary(**arguments))
 
     return app
 
