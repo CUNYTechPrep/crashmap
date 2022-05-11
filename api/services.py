@@ -1,12 +1,17 @@
 from dataclasses import asdict, is_dataclass
 from datetime import date, time
 from flask.json import JSONEncoder
+from functools import partial, reduce
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
-from typing import Any, Optional, Sequence
+from itertools import chain
+from operator import is_not
+from sqlalchemy import func, select
+import sqlalchemy.dialects.postgresql as postgresql
+from typing import Any, Iterable, Optional, Sequence
 
-from models import Boro, Collision, db, H3, NTA2020
+from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
 
 
 class BoroService:
@@ -87,111 +92,99 @@ class NTA2020Service:
 
 
 class SummaryService:
-    COMMON_COLUMNS = '''least(min(collision.date), greatest(:start_date, (SELECT min(collision.date) FROM collision))) AS start_date,
-                        greatest(max(collision.date), least(:end_date, (SELECT max(collision.date) FROM collision))) AS end_date,
-                        count(DISTINCT collision.id) AS collisions,
-                        count(DISTINCT vehicle.id) AS vehicles,
-                        count(person.id) AS people,
-                        count(person.id) FILTER (WHERE person.type = 'Occupant') AS occupants,
-                        count(person.id) FILTER (WHERE person.type = 'Bicyclist') AS cyclists,
-                        count(person.id) FILTER (WHERE person.type = 'Pedestrian') AS pedestrians,
-                        count(person.id) FILTER (WHERE person.type = 'Other Motorized') AS others,
-                        count(person.id) FILTER (WHERE person.injury = 'Injured') AS people_injured,
-                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Occupant') AS occupants_injured,
-                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Bicyclist') AS cyclists_injured,
-                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Pedestrian') AS pedestrians_injured,
-                        count(person.id) FILTER (WHERE person.injury = 'Injured' AND person.type = 'Other Motorized') AS others_injured,
-                        count(person.id) FILTER (WHERE person.injury = 'Killed') AS people_killed,
-                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Occupant') AS occupants_killed,
-                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Bicyclist') AS cyclists_killed,
-                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Pedestrian') AS pedestrians_killed,
-                        count(person.id) FILTER (WHERE person.injury = 'Killed' AND person.type = 'Other Motorized') AS others_killed'''
+    @staticmethod
+    def get_summary(start_date: Optional[date], end_date: Optional[date], predicate: Optional[Any] = None,
+                    distinct_columns: Iterable = (), additional_columns: Iterable = (),
+                    join_model: Optional[db.Model] = None, join_clause: Optional[Any] = None) -> list[dict[str, Any]]:
+        query = Collision.query
+        if join_model or join_clause:
+            query = query.join(join_model, join_clause)
+        query = query.join(Vehicle, Collision.id == Vehicle.collision_id, isouter=True) \
+                     .join(Person, Collision.id == Person.collision_id, isouter=True) \
+                     .where(Collision.longitude.is_not(None)) \
+                     .where(Collision.latitude.is_not(None))
+        if predicate is not None:
+            query = query.where(predicate)
+        if start_date:
+            query = query.where(start_date <= Collision.date)
+        if end_date:
+            query = query.where(Collision.date <= end_date)
+        if distinct_columns:
+            query = query.group_by(*distinct_columns) \
+                         .order_by(*distinct_columns)
+        columns = chain(distinct_columns,
+                        (func.least(func.min(Collision.date),
+                                    func.greatest(start_date,
+                                                  select(func.min(Collision.date)).scalar_subquery()))
+                             .label('start_date'),
+                         func.greatest(func.max(Collision.date),
+                                       func.least(end_date,
+                                                  select(func.max(Collision.date)).scalar_subquery()))
+                             .label('end_date'),
+                         func.count(Collision.id.distinct())
+                             .label('collisions'),
+                         func.count(Vehicle.id.distinct())
+                             .label('vehicles')),
+                        chain.from_iterable((reduce(lambda _, criterion: _.filter(criterion),
+                                                    filter(partial(is_not, None),
+                                                           (injury_predicate, person_type_predicate)),
+                                                    func.count(Person.id)).label(f'{person_type}{injury_suffix}')
+                                             for person_type, person_type_predicate
+                                             in (('people', None),
+                                                 ('occupants', Person.type == 'Occupant'),
+                                                 ('cyclists', Person.type == 'Bicyclist'),
+                                                 ('pedestrians', Person.type == 'Pedestrian'),
+                                                 ('others', Person.type == 'Other Motorized')))
+                                            for injury_suffix, injury_predicate
+                                            in (('', None),
+                                                ('_injured', Person.injury == 'Injured'),
+                                                ('_killed', Person.injury == 'Killed'))),
+                        additional_columns)
+        return [*map(dict, query.values(*columns))]
 
     @staticmethod
-    def get_h3_summary(h3_index: Optional[int], nta2020_id: Optional[str],
+    def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
                        start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
-        if h3_index is not None:
-            key_column = 'collision.h3_index'
-            predicate = '='
-            key = h3_index
-        elif nta2020_id is not None:
-            key_column = 'collision.nta2020_id'
-            predicate = 'LIkE'
-            key = nta2020_id
-        else:
-            raise ValueError('Invalid combination of parameters provided.')
-        sql_statement = f'''SELECT collision.h3_index,
-                                   {SummaryService.COMMON_COLUMNS},
-                                   json_object_agg(DISTINCT collision.id, ARRAY [collision.longitude, collision.latitude]) AS collision_locations
-                            FROM collision
-                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
-                            LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {key_column} {predicate} :key
-                                  daterange(:start_date, :end_date, '[]') @> collision.date
-                            GROUP BY collision.h3_index
-                            ORDER BY collision.h3_index'''
-        parameters = {'key': key,
-                      'start_date': start_date,
-                      'end_date': end_date}
-        return [*map(dict, db.session.execute(sql_statement, parameters))]
+        match (h3_index, k, nta2020_id):
+            case (None, None, None):
+                predicate = None
+            case (h3_index, k, None) if k is None or k >= 0:
+                if k:
+                    predicate = Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k)))
+                else:
+                    predicate = Collision.h3_index == h3_index
+            case (None, None, nta2020_id):
+                predicate = Collision.nta2020_id.like(nta2020_id)
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
+        return SummaryService.get_summary(start_date, end_date,
+                                          predicate, (Collision.h3_index,),
+                                          (func.json_object_agg(Collision.id.distinct(),
+                                                                postgresql.array((Collision.longitude,
+                                                                                  Collision.latitude)))
+                                               .label('collision_locations'),))
 
     @staticmethod
     def get_nta2020_summary(nta2020_id: Optional[str], boro_id: Optional[int],
                             start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
-        if nta2020_id is not None:
-            key_column = 'collision.nta2020_id'
-            predicate = 'LIKE'
-            key = nta2020_id
-        elif boro_id is not None:
-            key_column = 'nta2020.boro_id'
-            predicate = '='
-            key = boro_id
-        else:
-            raise ValueError('Invalid combination of parameters provided.')
-        sql_statement = f'''SELECT collision.nta2020_id,
-                                   {SummaryService.COMMON_COLUMNS}
-                            FROM collision
-                            INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
-                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
-                            LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {key_column} {predicate} :key AND
-                                  daterange(:start_date, :end_date, '[]') @> collision.date
-                            GROUP BY collision.nta2020_id
-                            ORDER BY collision.nta2020_id'''
-        parameters = {'key': key,
-                      'start_date': start_date,
-                      'end_date': end_date}
-        return [*map(dict, db.session.execute(sql_statement, parameters))]
+        match (nta2020_id, boro_id):
+            case (None, None):
+                arguments = {}
+            case (nta2020_id, None):
+                arguments = {'predicate': Collision.nta2020_id.like(nta2020_id)}
+            case (None, boro_id):
+                arguments = {'join_model': NTA2020,
+                             'join_clause': NTA2020.id == Collision.nta2020_id,
+                             'predicate': NTA2020.boro_id == boro_id}
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
+        return SummaryService.get_summary(start_date, end_date, distinct_columns=(Collision.nta2020_id,), **arguments)
 
     @staticmethod
     def get_boro_summary(boro_id: Optional[int], start_date: Optional[date], end_date: Optional[date]) \
             -> list[dict[str, Any]]:
-        if boro_id is None:
-            predicate = ''
-        else:
-            predicate = 'nta2020.boro_id = :boro_id AND'
-        sql_statement = f'''SELECT nta2020.boro_id,
-                                   {SummaryService.COMMON_COLUMNS}
-                            FROM collision
-                            INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
-                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
-                            LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {predicate}
-                                  daterange(:start_date, :end_date, '[]') @> collision.date
-                            GROUP BY nta2020.boro_id
-                            ORDER BY nta2020.boro_id'''
-        parameters = {'boro_id': boro_id,
-                      'start_date': start_date,
-                      'end_date': end_date}
-        return [*map(dict, db.session.execute(sql_statement, parameters))]
-
-    @staticmethod
-    def get_city_summary(start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
-        sql_statement = f'''SELECT {SummaryService.COMMON_COLUMNS}
-                            FROM collision
-                            LEFT JOIN vehicle ON collision.id = vehicle.collision_id
-                            LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE daterange(:start_date, :end_date, '[]') @> collision.date'''
-        parameters = {'start_date': start_date,
-                      'end_date': end_date}
-        return [*map(dict, db.session.execute(sql_statement, parameters))]
+        predicate = NTA2020.boro_id == boro_id \
+                    if boro_id \
+                    else None
+        return SummaryService.get_summary(start_date, end_date, predicate, (NTA2020.boro_id,),
+                                          join_model=NTA2020, join_clause=NTA2020.id == Collision.nta2020_id)
