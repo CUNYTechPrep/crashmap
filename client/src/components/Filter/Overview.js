@@ -3,7 +3,7 @@ import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import ListGroup from 'react-bootstrap/ListGroup';
+
 
 const api_prefix = process.env.REACT_APP_API_PROXY_URL_PREFIX;
 let x;
@@ -17,7 +17,7 @@ function AllCity(props) {
             <div className='card border border-dark rounded bg-dark text-light'>
               <div className='card-body'>
                 <div className='card-title'>Overview of Boroush</div>
-                <p className='card-text'>
+                <p className='card-text' >
                   inside of {props.hood} There has been a total of collisions{' '}
                   {props.collide}.
                 </p>
@@ -40,7 +40,7 @@ function Con(props) {
           </Col>
         </Row>
         <Row>
-          <Col m={3}>
+          <Col m={6}>
             {' '}
             {[
               'Primary',
@@ -59,7 +59,7 @@ function Con(props) {
               >
                 <Card.Body>
                   <Card.Title>How many collisions?</Card.Title>
-                  <Card.Text>
+                  <Card.Text key={props.keys}>
                     From {props.start} through {props.end}, There has been a
                     total of collisions {props.crashes} involving{' '}
                     {props.vehicles} vehicles.
@@ -68,7 +68,7 @@ function Con(props) {
               </Card>
             ))}
           </Col>
-          <Col m={3}>
+          <Col m={6}>
             {[
               // 'Primary',
               // 'Secondary',
@@ -195,6 +195,7 @@ class Overview extends Component {
           {' '}
           {this.state.borough.map((content, i) => (
             <Con
+              key={content.keys}
               crashes={content.collisions}
               start={content.start_date}
               end={content.end_date}

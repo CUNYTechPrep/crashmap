@@ -50,7 +50,7 @@ class App extends Component {
             </div>
           </div>
 
-          <div className='barchart row'>
+          {/* <div className='barchart row'>
             <div className='col-6'>
               <BarChart
                 // handleBoroughChange={this.handleBoroughChange.bind(this)}
@@ -58,7 +58,7 @@ class App extends Component {
               />
             </div>
             <div className='col-6'>pie chart</div>
-          </div>
+          </div> */}
         </div>
       </Container>
     );

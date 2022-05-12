@@ -6,10 +6,10 @@ import "./styles.css";
 import ListGroup from 'react-bootstrap/ListGroup'
 
 const options = [
-  { value: 2, label: 'Bronx', lng: '-73.865433', lat: '40.8448' },
-  { value: 3, label: 'Brooklyn', lng: '-73.9442', lat: '40.6782' },
-  { value: 4, label: 'Queens', lng: '-73.7949', lat: '40.7282' },
-  { value: 1, label: 'Manhattan', lng: '-73.9712', lat: '40.7831' },
+  { value: 2, label: 'bronx', lng: '-73.865433', lat: '40.8448' },
+  { value: 3, label: 'brooklyn', lng: '-73.9442', lat: '40.6782' },
+  { value: 4, label: 'queens', lng: '-73.7949', lat: '40.7282' },
+  { value: 1, label: 'manhattan', lng: '-73.9712', lat: '40.7831' },
   {
     value: 5,
     label: 'Staten Island',
@@ -21,7 +21,7 @@ function Rank(props){
   return(
     <div>
            <ListGroup >
-  <ListGroup.Item  variant='primary'>{props.name} : {props.total}</ListGroup.Item>
+  <ListGroup.Item  variant='primary' key={props.key}>  {props.counter}. {props.name} : {props.total}</ListGroup.Item>
   
 
 </ListGroup>
@@ -132,7 +132,7 @@ class Filter extends Component {
       </div>
       
       </div>
-      <div><h2>Ranking of most Collisions</h2>{this.state.boroughSummary.map((rank,i) => <Rank list={rank.boro_id}name={rank.id} total={rank.coll}></Rank>)}</div>
+      <div><h2>Ranking of most Collisions</h2>{this.state.boroughSummary.map((rank,i) => <Rank counter={++i} key={rank.key} list={rank.boro_id}name={rank.id} total={rank.coll}></Rank>)}</div>
       </div>
     );
   }
