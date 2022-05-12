@@ -43,14 +43,6 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         return {key: request.args.get(key, None, parser)
                 for key, parser in expected_args.items()}
 
-    def make_geojson_response(obj: dict | list) -> Response:
-        response = make_response({'type': 'FeatureCollection',
-                                  'features': obj}
-                                 if type(obj) is list
-                                 else obj)
-        response.headers['Content-type'] = 'application/geo+json'
-        return response
-
     def parse_location_pair(value: Optional[str]) -> Optional[tuple[tuple[float, float], tuple[float, float]]]:
         if value is None:
             return None
@@ -69,7 +61,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 
     @app.route('/api/all.geojson', methods=['GET'])
     def all_as_geojson() -> Response:
-        return make_geojson_response(GeoService.get_all())
+        return jsonify(GeoService.get_all())
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
@@ -79,7 +71,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def nta2020_as_geojson() -> Response:
         arguments = get_all_request_args({'id': str,
                                           'boro_id': int})
-        return make_geojson_response(GeoService.get_nta2020(**arguments))
+        return jsonify(GeoService.get_nta2020(**arguments))
 
     @app.route('/api/h3.geojson', methods=['GET'])
     def h3_as_geojson() -> Response:
@@ -87,7 +79,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'k': int,
                                           'nta2020_id': str,
                                           'only_water': bool_from_str})
-        return make_geojson_response(GeoService.get_h3(**arguments))
+        return jsonify(GeoService.get_h3(**arguments))
 
     @app.route('/api/collision.json', methods=['GET', 'POST'])
     def collision_as_geojson() -> Response:
