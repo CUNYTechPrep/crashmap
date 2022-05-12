@@ -8,7 +8,7 @@ from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, join, or_, select
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
 
@@ -103,7 +103,7 @@ class CollisionService:
         query = Collision.query
         match (id, h3_index, k, nta2020_id, rectangle):
             case (None, None, None, None, None):
-                pass
+                query = query.filter(and_(Collision.latitude.is_not(None), Collision.longitude.is_not(None)))
             case (id, None, None, None, None):
                 query = query.filter(Collision.id == id)
             case (None, h3_index, k, None, None) if k is None or k >= 0:
@@ -160,12 +160,10 @@ class SummaryService:
                     predicate: Optional[Any] = None, distinct_columns: Iterable = (), additional_columns: Iterable = (),
                     join_model: Optional[db.Model] = None, join_clause: Optional[Any] = None) -> list[dict[str, Any]]:
         query = Collision.query
-        if join_model or join_clause:
+        if join_model is not None or join_clause is not None:
             query = query.join(join_model, join_clause)
         query = query.join(Vehicle, Collision.id == Vehicle.collision_id, isouter=True) \
-                     .join(Person, Collision.id == Person.collision_id, isouter=True) \
-                     .where(Collision.longitude.is_not(None)) \
-                     .where(Collision.latitude.is_not(None))
+                     .join(Person, Collision.id == Person.collision_id, isouter=True)
         if predicate is not None:
             query = query.where(predicate)
         if start_date:
@@ -220,19 +218,26 @@ class SummaryService:
 
     @staticmethod
     def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
+                       rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
                        start_date: Optional[date], end_date: Optional[date],
                        start_time: Optional[time], end_time: Optional[time],
                        include_collision_locations: Optional[bool]) -> list[dict[str, Any]]:
-        match (h3_index, k, nta2020_id):
-            case (None, None, None):
-                predicate = None
-            case (h3_index, k, None) if k is None or k >= 0:
+        match (h3_index, k, nta2020_id, rectangle):
+            case (None, None, None, None):
+                arguments = {'predicate': Collision.h3_index.is_not(None)}
+            case (h3_index, k, None, None) if k is None or k >= 0:
                 if k:
-                    predicate = Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k)))
+                    arguments = {'predicate': Collision.h3_index.in_(map(string_to_h3,
+                                                                         k_ring(h3_to_string(h3_index), k)))}
                 else:
-                    predicate = Collision.h3_index == h3_index
-            case (None, None, nta2020_id):
-                predicate = Collision.nta2020_id.like(nta2020_id)
+                    arguments = {'predicate': Collision.h3_index == h3_index}
+            case (None, None, nta2020_id, None):
+                arguments = {'predicate': Collision.nta2020_id.like(nta2020_id)}
+            case (None, None, None, rectangle):
+                arguments = {'join_model': H3,
+                             'join_clause': H3.h3_index == Collision.h3_index,
+                             'predicate': geo_func.ST_Intersects(geo_func.ST_MakeEnvelope(*chain(*rectangle)),
+                                                                 H3.geometry)}
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
         additional_columns = (func.json_object_agg(Collision.id.distinct(),
@@ -241,32 +246,53 @@ class SummaryService:
                              if include_collision_locations \
                              else ()
         return SummaryService.get_summary(start_date, end_date, start_time, end_time,
-                                          predicate, (Collision.h3_index,),
-                                          additional_columns)
+                                          distinct_columns=(Collision.h3_index,), additional_columns=additional_columns,
+                                          **arguments)
 
     @staticmethod
     def get_nta2020_summary(nta2020_id: Optional[str], boro_id: Optional[int],
+                            rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
                             start_date: Optional[date], end_date: Optional[date],
                             start_time: Optional[time], end_time: Optional[time]) -> list[dict[str, Any]]:
-        match (nta2020_id, boro_id):
-            case (None, None):
-                arguments = {}
-            case (nta2020_id, None):
+        match (nta2020_id, boro_id, rectangle):
+            case (None, None, None):
+                arguments = {'predicate': Collision.nta2020_id.is_not(None)}
+            case (nta2020_id, None, None):
                 arguments = {'predicate': Collision.nta2020_id.like(nta2020_id)}
-            case (None, boro_id):
+            case (None, boro_id, None):
                 arguments = {'join_model': NTA2020,
                              'join_clause': NTA2020.id == Collision.nta2020_id,
                              'predicate': NTA2020.boro_id == boro_id}
+            case (None, None, rectangle):
+                arguments = {'join_model': NTA2020,
+                             'join_clause': NTA2020.id == Collision.nta2020_id,
+                             'predicate': geo_func.ST_Intersects(geo_func.ST_MakeEnvelope(*chain(*rectangle)),
+                                                                 NTA2020.geometry)}
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
         return SummaryService.get_summary(start_date, end_date, start_time, end_time,
                                           distinct_columns=(Collision.nta2020_id,), **arguments)
 
     @staticmethod
-    def get_boro_summary(boro_id: Optional[int], start_date: Optional[date], end_date: Optional[date],
+    def get_boro_summary(boro_id: Optional[int], rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
+                         start_date: Optional[date], end_date: Optional[date],
                          start_time: Optional[time], end_time: Optional[time]) -> list[dict[str, Any]]:
-        predicate = NTA2020.boro_id == boro_id \
-                    if boro_id \
-                    else None
-        return SummaryService.get_summary(start_date, end_date, start_time, end_time, predicate, (NTA2020.boro_id,),
-                                          join_model=NTA2020, join_clause=NTA2020.id == Collision.nta2020_id)
+        match (boro_id, rectangle):
+            case (boro_id, None):
+                arguments = {'join_model': NTA2020,
+                             'join_clause': NTA2020.id == Collision.nta2020_id,
+                             'predicate': NTA2020.boro_id == boro_id}
+            case (None, rectangle):
+                arguments = {'join_model': join(NTA2020, Boro, Boro.id == NTA2020.boro_id),
+                             'join_clause': NTA2020.id == Collision.nta2020_id,
+                             'predicate': geo_func.ST_Intersects(geo_func.ST_MakeEnvelope(*chain(*rectangle)),
+                                                                 Boro.geometry)}
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
+        return SummaryService.get_summary(start_date, end_date, start_time, end_time,
+                                          distinct_columns=(NTA2020.boro_id,), **arguments)
+
+    @staticmethod
+    def get_city_summary(start_date: Optional[date], end_date: Optional[date],
+                         start_time: Optional[time], end_time: Optional[time]) -> list[dict[str, Any]]:
+        return SummaryService.get_summary(start_date, end_date, start_time, end_time, Collision.h3_index.is_not(None))

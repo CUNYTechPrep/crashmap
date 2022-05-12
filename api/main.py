@@ -110,6 +110,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         arguments = get_all_request_args({'h3_index': int,
                                           'k': int,
                                           'nta2020_id': str,
+                                          'rectangle': parse_location_pair,
                                           'start_date': parse_isodate,
                                           'end_date': parse_isodate,
                                           'start_time': parse_isotime,
@@ -121,6 +122,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def nta2020_summary_as_json() -> Response:
         arguments = get_all_request_args({'nta2020_id': str,
                                           'boro_id': int,
+                                          'rectangle': parse_location_pair,
                                           'start_date': parse_isodate,
                                           'end_date': parse_isodate,
                                           'start_time': parse_isotime,
@@ -130,6 +132,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     @app.route('/api/boro_summary.json', methods=['GET'])
     def boro_summary_as_json() -> Response:
         arguments = get_all_request_args({'boro_id': int,
+                                          'rectangle': parse_location_pair,
                                           'start_date': parse_isodate,
                                           'end_date': parse_isodate,
                                           'start_time': parse_isotime,
@@ -142,7 +145,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'end_date': parse_isodate,
                                           'start_time': parse_isotime,
                                           'end_time': parse_isotime})
-        return jsonify(SummaryService.get_summary(**arguments))
+        return jsonify(SummaryService.get_city_summary(**arguments))
 
     return app
 
