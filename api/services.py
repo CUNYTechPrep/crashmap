@@ -18,7 +18,7 @@ from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
 
 class GeoService:
     @staticmethod
-    def get_all() -> list[dict[str, Any]]:
+    def get_all() -> dict:
         sql_statement = '''SELECT 'Feature' AS type,
                                   json_build_object(
                                       'id', b.id,
@@ -53,19 +53,21 @@ class GeoService:
                                           'geometry', json(b.land_geometry))) AS properties,
                                   json(b.geometry) AS geometry
                            FROM boro b'''
-        return [*map(dict, db.session.execute(sql_statement))]
+        return {'type': 'FeatureCollection',
+                'features': [*map(dict, db.session.execute(sql_statement))]}
 
     @staticmethod
     def get_boro(id: Optional[int]) -> dict:
         query = Boro.query
         if id is not None:
             query = query.where(Boro.id == id)
-        columns = (func.json_agg(geo_func.ST_AsGeoJSON(Boro).cast(JSON)).label('geojson'),)
         return {'type': 'FeatureCollection',
-                'features': [dict(value) for value in query.value(*columns)]}
+                'features': [dict(value)
+                             for value
+                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(Boro).cast(JSON)).label('feature'))]}
 
     @staticmethod
-    def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
+    def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> dict:
         query = NTA2020.query
         match (id, boro_id):
             case (None, None):
@@ -76,11 +78,14 @@ class GeoService:
                 query = query.filter(NTA2020.boro_id == boro_id)
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
-        return query.all()
+        return {'type': 'FeatureCollection',
+                'features': [dict(value)
+                             for value
+                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(NTA2020).cast(JSON)).label('feature'))]}
 
     @staticmethod
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
-            -> list[H3]:
+            -> dict:
         query = H3.query
         match (h3_index, k, nta2020_id):
             case (None, None, None):
@@ -94,7 +99,10 @@ class GeoService:
                 query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
         if only_water is not None:
             query = query.filter(H3.only_water == only_water)
-        return query.all()
+        return {'type': 'FeatureCollection',
+                'features': [dict(value)
+                             for value
+                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(H3).cast(JSON)).label('feature'))]}
 
 
 class CollisionService:
