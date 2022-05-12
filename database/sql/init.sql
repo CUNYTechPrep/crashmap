@@ -98,14 +98,17 @@ CREATE TABLE IF NOT EXISTS person (
 );
 
 -- Create indices.
---CREATE INDEX idx_boro_geometry ON boro USING gist (geometry);
+CREATE INDEX idx_boro_geometry ON boro USING gist (geometry);
 
 CREATE INDEX idx_nta2020_geometry ON nta2020 USING gist (geometry);
 
 CREATE INDEX idx_h3_cell_geometry ON h3 USING gist (geometry);
 
+CREATE INDEX idx_h3_nta2020_nta2020_id_h3_index ON h3_nta2020 USING btree (nta2020_id, h3_index);
+
 CREATE INDEX idx_collision_date ON collision USING btree (date);
---CREATE INDEX idx_collision_time ON collision USING btree (time);
+CREATE INDEX idx_collision_time ON collision USING btree (time);
+CREATE INDEX idx_collision_location ON collision USING gist(st_point(longitude, latitude));
 CREATE INDEX idx_collision_h3_index ON collision USING btree (h3_index);
 CREATE INDEX idx_collision_nta2020_id ON collision USING btree (nta2020_id);
 
