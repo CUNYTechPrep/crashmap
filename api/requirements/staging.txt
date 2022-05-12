@@ -1,3 +1,5 @@
+toolz
+python-dateutil
 psycopg2-binary
 Werkzeug
 Flask
