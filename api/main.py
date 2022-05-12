@@ -4,7 +4,7 @@ from flask import Flask, jsonify, make_response, request, Response
 from typing import Any, Optional
 
 from models import db
-from services import BoroService, CollisionService, CustomEncoder, GeoService, H3Service, NTA2020Service, SummaryService
+from services import CollisionService, CustomEncoder, GeoService, SummaryService
 
 
 def create_app() -> Flask:  # TODO: Move views to a separate file
@@ -48,19 +48,19 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def index() -> Response:
         return app.send_static_file('index.html')
 
-    @app.route('/api/all.json', methods=['GET'])
-    def all_as_json() -> Response:
-        return jsonify(GeoService.get_all())
+    @app.route('/api/all.geojson', methods=['GET'])
+    def all_as_geojson() -> Response:
+        return make_geojson_response(GeoService.get_all())
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
-        return make_geojson_response(BoroService.get_boro(request.args.get('id', None, int)))
+        return make_geojson_response(GeoService.get_boro(request.args.get('id', None, int)))
 
     @app.route('/api/nta2020.geojson', methods=['GET'])
     def nta2020_as_geojson() -> Response:
         arguments = get_all_request_args({'id': str,
                                           'boro_id': int})
-        return make_geojson_response(NTA2020Service.get_nta2020(**arguments))
+        return make_geojson_response(GeoService.get_nta2020(**arguments))
 
     @app.route('/api/h3.geojson', methods=['GET'])
     def h3_as_geojson() -> Response:
@@ -68,7 +68,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'k': int,
                                           'nta2020_id': str,
                                           'only_water': bool})
-        return make_geojson_response(H3Service.get_h3(**arguments))
+        return make_geojson_response(GeoService.get_h3(**arguments))
 
     @app.route('/api/collision.json', methods=['GET', 'POST'])
     def collision_as_geojson() -> Response:
