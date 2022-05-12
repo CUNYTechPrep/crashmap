@@ -154,7 +154,7 @@ class SummaryService:
                             INNER JOIN nta2020 ON nta2020.id = collision.nta2020_id
                             LEFT JOIN vehicle ON collision.id = vehicle.collision_id
                             LEFT JOIN person ON collision.id = person.collision_id
-                            WHERE {key_column} {predicate} :key
+                            WHERE {key_column} {predicate} :key AND
                                   daterange(:start_date, :end_date, '[]') @> collision.date
                             GROUP BY collision.nta2020_id
                             ORDER BY collision.nta2020_id'''

@@ -1,4 +1,11 @@
 #hero {
   height: 650px;
+  /* display: flex; */
   /* overflow: hidden;  <- TODO fix overflow issue in mapbox container */
+}
+.mt-5 {
+  margin-top: 20px !important;
+}
+.barchart {
+  margin-top: 20px;
 }
