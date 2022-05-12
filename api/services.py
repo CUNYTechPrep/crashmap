@@ -16,40 +16,80 @@ from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
 
 class GeoService:
     @staticmethod
-    def get_all() -> dict[str, Any]:
-        sql_statement = '''SELECT json_object_agg(
-                                      b.id,
-                                      json_build_object(
-                                          'name', b.name,
-                                          'nta2020s', (SELECT json_object_agg(
-                                                                  n.id,
-                                                                  json_build_object(
-                                                                      'name', n.name,
-                                                                      'h3s', (SELECT json_object_agg(
-                                                                                         h.h3_index,
-                                                                                         json_build_object(
-                                                                                             'only_water', h.only_water
-                                                                                             )
-                                                                                         )
-                                                                              FROM h3_nta2020 hn
-                                                                              JOIN h3 h ON hn.h3_index = h.h3_index
-                                                                              WHERE hn.nta2020_id = n.id)
-                                                                      )
-                                                                  )
-                                                       FROM nta2020 n
-                                                       WHERE n.boro_id = b.id)
-                                          )
-                                      )
+    def get_all() -> list[dict[str, Any]]:
+        sql_statement = '''SELECT 'Feature' AS type,
+                                  json_build_object(
+                                      'id', b.id,
+                                      'name', b.name,
+                                      'nta2020s', json_build_object(
+                                          'type', 'FeatureCollection',
+                                          'features', (
+                                              SELECT array_agg(
+                                                  json_build_object(
+                                                      'type', 'Feature',
+                                                      'properties', json_build_object(
+                                                          'id', n.id,
+                                                          'name', n.name,
+                                                          'h3s', json_build_object(
+                                                              'type', 'FeatureCollection',
+                                                              'features', (
+                                                                  SELECT array_agg(
+                                                                      json_build_object(
+                                                                         'type', 'Feature',
+                                                                         'properties', json_build_object(
+                                                                             'h3_index', h.h3_index,
+                                                                             'only_water', h.only_water),
+                                                                         'geometry', json(h.geometry)))
+                                                                  FROM h3_nta2020 hn
+                                                                  JOIN h3 h ON hn.h3_index = h.h3_index
+                                                                  WHERE hn.nta2020_id = n.id))),
+                                                      'geometry', json(n.geometry)))
+                                              FROM nta2020 n
+                                              WHERE n.boro_id = b.id)),
+                                      'land_geometry', json_build_object(
+                                          'type', 'Feature',
+                                          'geometry', json(b.land_geometry))) AS properties,
+                                  json(b.geometry) AS geometry
                            FROM boro b'''
-        return {'boros': db.session.execute(sql_statement).scalar()}
+        return [*map(dict, db.session.execute(sql_statement))]
 
-
-class BoroService:
     @staticmethod
     def get_boro(id: Optional[int]) -> list[Boro]:
         query = Boro.query
         if id is not None:
             query = query.filter(Boro.id == id)
+        return query.all()
+
+    @staticmethod
+    def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
+        query = NTA2020.query
+        match (id, boro_id):
+            case (None, None):
+                pass
+            case (id, None):
+                query = query.filter(NTA2020.id.like(id))
+            case (None, boro_id):
+                query = query.filter(NTA2020.boro_id == boro_id)
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
+        return query.all()
+
+    @staticmethod
+    def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
+            -> list[H3]:
+        query = H3.query
+        match (h3_index, k, nta2020_id):
+            case (None, None, None):
+                pass
+            case (h3_index, k, None) if k is None or k >= 0:
+                if k:
+                    query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                else:
+                    query = query.filter(H3.h3_index == h3_index)
+            case (None, None, nta2020_id):
+                query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
+        if only_water is not None:
+            query = query.filter(H3.only_water == only_water)
         return query.all()
 
 
@@ -92,42 +132,6 @@ class CustomEncoder(JSONEncoder):
         elif isinstance(o, WKBElement):
             return to_shape(o).__geo_interface__
         return super().default(o)
-
-
-class H3Service:
-    @staticmethod
-    def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
-            -> list[H3]:
-        query = H3.query
-        match (h3_index, k, nta2020_id):
-            case (None, None, None):
-                pass
-            case (h3_index, k, None) if k is None or k >= 0:
-                if k:
-                    query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
-                else:
-                    query = query.filter(H3.h3_index == h3_index)
-            case (None, None, nta2020_id):
-                query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
-        if only_water is not None:
-            query = query.filter(H3.only_water == only_water)
-        return query.all()
-
-
-class NTA2020Service:
-    @staticmethod
-    def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
-        query = NTA2020.query
-        match (id, boro_id):
-            case (None, None):
-                pass
-            case (id, None):
-                query = query.filter(NTA2020.id.like(id))
-            case (None, boro_id):
-                query = query.filter(NTA2020.boro_id == boro_id)
-            case _:
-                raise ValueError('Invalid combination of arguments provided.')
-        return query.all()
 
 
 class SummaryService:
