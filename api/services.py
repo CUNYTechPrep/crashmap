@@ -28,17 +28,20 @@ class CollisionService:
     def get_collision(id: Optional[int], h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
                       start_date: Optional[date], end_date: Optional[date]) -> list[Collision]:
         query = Collision.query
-        if id is not None:
-            query = query.filter(Collision.id == id)
-        if h3_index is not None:
-            if k is None or k == 0:
-                query = query.filter(Collision.h3_index == h3_index)
-            else:
-                query = query.filter(Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
-        elif k is not None:
-            raise ValueError('k cannot be specified without h3_index.')
-        if nta2020_id is not None:
-            query = query.filter(Collision.nta2020_id.like(nta2020_id))
+        match (id, h3_index, k, nta2020_id):
+            case (None, None, None, None):
+                pass
+            case (id, None, None, None):
+                query = query.filter(Collision.id == id)
+            case (None, h3_index, k, None) if k is None or k >= 0:
+                if k:
+                    query = query.filter(Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                else:
+                    query = query.filter(Collision.h3_index == h3_index)
+            case (None, None, None, nta2020_id):
+                query = query.filter(Collision.nta2020_id.like(nta2020_id))
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
         if start_date is not None:
             query = query.filter(start_date <= Collision.date)
         if end_date is not None:
@@ -66,15 +69,16 @@ class H3Service:
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
             -> list[H3]:
         query = H3.query
-        if h3_index is not None:
-            if k is None or k == 0:
-                query = query.filter(H3.h3_index == h3_index)
-            else:
-                query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
-        elif k is not None:
-            raise ValueError('k cannot be specified without h3_index.')
-        if nta2020_id is not None:
-            query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
+        match (h3_index, k, nta2020_id):
+            case (None, None, None):
+                pass
+            case (h3_index, k, None) if k is None or k >= 0:
+                if k:
+                    query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                else:
+                    query = query.filter(H3.h3_index == h3_index)
+            case (None, None, nta2020_id):
+                query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
         if only_water is not None:
             query = query.filter(H3.only_water == only_water)
         return query.all()
@@ -84,10 +88,15 @@ class NTA2020Service:
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
         query = NTA2020.query
-        if id is not None:
-            query = query.filter(NTA2020.id.like(id))
-        if boro_id is not None:
-            query = query.filter(NTA2020.boro_id == boro_id)
+        match (id, boro_id):
+            case (None, None):
+                pass
+            case (id, None):
+                query = query.filter(NTA2020.id.like(id))
+            case (None, boro_id):
+                query = query.filter(NTA2020.boro_id == boro_id)
+            case _:
+                raise ValueError('Invalid combination of arguments provided.')
         return query.all()
 
 
