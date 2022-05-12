@@ -1,7 +1,7 @@
 from datetime import date, time
 from os import getenv
 from flask import Flask, jsonify, make_response, request, Response
-from typing import Any
+from typing import Any, Optional
 
 from models import db
 from services import BoroService, CollisionService, CustomEncoder, H3Service, NTA2020Service, SummaryService
@@ -20,6 +20,17 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         app.config['SQLALCHEMY_ECHO'] = True
         app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     db.init_app(app)
+
+    def bool_from_str(value: Optional[str]) -> Optional[bool]:
+        match value.lower():
+            case None:
+                return None
+            case '' | '0' | 'f' | 'false' | 'n' | 'no' | '✗':
+                return False
+            case '1' | 't' | 'true' | 'y' | 'yes' | '✓':
+                return True
+            case _:
+                raise ValueError(f'{value!r} could not be converted to type bool.')
 
     def get_all_request_args(expected_args: dict[str, Any]) -> dict[str, Any]:
         return {key: request.args.get(key, None, type)
@@ -73,7 +84,8 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'k': int,
                                           'nta2020_id': str,
                                           'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat})
+                                          'end_date': date.fromisoformat,
+                                          'include_collision_locations': bool_from_str})
         return jsonify(SummaryService.get_h3_summary(**arguments))
 
     @app.route('/api/nta2020_summary.json', methods=['GET'])

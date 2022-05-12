@@ -153,7 +153,8 @@ class SummaryService:
 
     @staticmethod
     def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
-                       start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
+                       start_date: Optional[date], end_date: Optional[date],
+                       include_collision_locations: Optional[bool]) -> list[dict[str, Any]]:
         match (h3_index, k, nta2020_id):
             case (None, None, None):
                 predicate = None
@@ -166,12 +167,14 @@ class SummaryService:
                 predicate = Collision.nta2020_id.like(nta2020_id)
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
+        additional_columns = (func.json_object_agg(Collision.id.distinct(),
+                                                   postgresql.array((Collision.longitude, Collision.latitude)))
+                                  .label('collision_locations'),) \
+                             if include_collision_locations \
+                             else ()
         return SummaryService.get_summary(start_date, end_date,
                                           predicate, (Collision.h3_index,),
-                                          (func.json_object_agg(Collision.id.distinct(),
-                                                                postgresql.array((Collision.longitude,
-                                                                                  Collision.latitude)))
-                                               .label('collision_locations'),))
+                                          additional_columns)
 
     @staticmethod
     def get_nta2020_summary(nta2020_id: Optional[str], boro_id: Optional[int],
