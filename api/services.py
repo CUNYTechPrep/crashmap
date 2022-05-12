@@ -3,6 +3,7 @@ from datetime import date, time
 from flask.json import JSONEncoder
 from functools import partial, reduce
 from geoalchemy2 import WKBElement
+from geoalchemy2 import func as geo_func
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
@@ -96,21 +97,25 @@ class GeoService:
 class CollisionService:
     @staticmethod
     def get_collision(id: Optional[int], h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
+                      rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
                       start_date: Optional[date], end_date: Optional[date],
                       start_time: Optional[time], end_time: Optional[time]) -> list[Collision]:
         query = Collision.query
-        match (id, h3_index, k, nta2020_id):
-            case (None, None, None, None):
+        match (id, h3_index, k, nta2020_id, rectangle):
+            case (None, None, None, None, None):
                 pass
-            case (id, None, None, None):
+            case (id, None, None, None, None):
                 query = query.filter(Collision.id == id)
-            case (None, h3_index, k, None) if k is None or k >= 0:
+            case (None, h3_index, k, None, None) if k is None or k >= 0:
                 if k:
                     query = query.filter(Collision.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
                 else:
                     query = query.filter(Collision.h3_index == h3_index)
-            case (None, None, None, nta2020_id):
+            case (None, None, None, nta2020_id, None):
                 query = query.filter(Collision.nta2020_id.like(nta2020_id))
+            case (None, None, None, None, rectangle):
+                query = query.filter(geo_func.ST_Contains(geo_func.ST_MakeEnvelope(*chain.from_iterable(rectangle)),
+                                                          geo_func.ST_Point(Collision.longitude, Collision.latitude)))
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
         if start_date is not None:

@@ -1,8 +1,10 @@
+from ast import literal_eval
 from dateutil.parser import isoparser
+from math import isfinite
 from os import getenv
 from flask import Flask, jsonify, make_response, request, Response
 from toolz import juxt, pipe
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from models import db
 from services import CollisionService, CustomEncoder, GeoService, SummaryService
@@ -49,6 +51,18 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         response.headers['Content-type'] = 'application/geo+json'
         return response
 
+    def parse_location_pair(value: Optional[str]) -> Optional[tuple[tuple[float, float], tuple[float, float]]]:
+        if value is None:
+            return None
+        if len(value) >= 128:
+            raise ValueError(f'The value’s length of {len(value):,} exceeds the maximum of 127.')
+        match literal_eval(value):
+            case result if isinstance(result, Sequence) and len(result) == 2 and \
+                           all(isinstance(_, Sequence) and len(_) == 2 and all(map(isfinite, _)) for _ in result):
+                return result
+            case _:
+                raise ValueError(f'{value!r} could not be converted to type ((float, float), (float, float)).')
+
     @app.route('/')
     def index() -> Response:
         return app.send_static_file('index.html')
@@ -83,6 +97,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'h3_index': int,
                                           'k': int,
                                           'nta2020_id': str,
+                                          'rectangle': parse_location_pair,
                                           'start_date': parse_isodate,
                                           'end_date': parse_isodate,
                                           'start_time': parse_isotime,
