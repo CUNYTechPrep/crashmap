@@ -73,7 +73,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
-        return make_geojson_response(GeoService.get_boro(request.args.get('id', None, int)))
+        return jsonify(GeoService.get_boro(request.args.get('id', None, int)))
 
     @app.route('/api/nta2020.geojson', methods=['GET'])
     def nta2020_as_geojson() -> Response:
