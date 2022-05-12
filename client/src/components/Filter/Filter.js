@@ -12,7 +12,7 @@ const options = [
   { value: 1, label: 'manhattan', lng: '-73.9712', lat: '40.7831' },
   {
     value: 5,
-    label: 'Staten Island',
+    label: 'statenIsland',
     lng: '-74.1502',
     lat: '40.5795',
   },
