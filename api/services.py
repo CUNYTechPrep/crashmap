@@ -14,6 +14,36 @@ from typing import Any, Iterable, Optional, Sequence
 from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
 
 
+class GeoService:
+    @staticmethod
+    def get_all() -> dict[str, Any]:
+        sql_statement = '''SELECT json_object_agg(
+                                      b.id,
+                                      json_build_object(
+                                          'name', b.name,
+                                          'nta2020s', (SELECT json_object_agg(
+                                                                  n.id,
+                                                                  json_build_object(
+                                                                      'name', n.name,
+                                                                      'h3s', (SELECT json_object_agg(
+                                                                                         h.h3_index,
+                                                                                         json_build_object(
+                                                                                             'only_water', h.only_water
+                                                                                             )
+                                                                                         )
+                                                                              FROM h3_nta2020 hn
+                                                                              JOIN h3 h ON hn.h3_index = h.h3_index
+                                                                              WHERE hn.nta2020_id = n.id)
+                                                                      )
+                                                                  )
+                                                       FROM nta2020 n
+                                                       WHERE n.boro_id = b.id)
+                                          )
+                                      )
+                           FROM boro b'''
+        return {'boros': db.session.execute(sql_statement).scalar()}
+
+
 class BoroService:
     @staticmethod
     def get_boro(id: Optional[int]) -> list[Boro]:

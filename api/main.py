@@ -4,7 +4,7 @@ from flask import Flask, jsonify, make_response, request, Response
 from typing import Any, Optional
 
 from models import db
-from services import BoroService, CollisionService, CustomEncoder, H3Service, NTA2020Service, SummaryService
+from services import BoroService, CollisionService, CustomEncoder, GeoService, H3Service, NTA2020Service, SummaryService
 
 
 def create_app() -> Flask:  # TODO: Move views to a separate file
@@ -47,6 +47,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     @app.route('/')
     def index() -> Response:
         return app.send_static_file('index.html')
+
+    @app.route('/api/all.json', methods=['GET'])
+    def all_as_json() -> Response:
+        return jsonify(GeoService.get_all())
 
     @app.route('/api/boro.geojson', methods=['GET'])
     def boro_as_geojson() -> Response:
