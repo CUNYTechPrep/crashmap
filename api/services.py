@@ -7,7 +7,7 @@ from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
 
@@ -96,7 +96,8 @@ class GeoService:
 class CollisionService:
     @staticmethod
     def get_collision(id: Optional[int], h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
-                      start_date: Optional[date], end_date: Optional[date]) -> list[Collision]:
+                      start_date: Optional[date], end_date: Optional[date],
+                      start_time: Optional[time], end_time: Optional[time]) -> list[Collision]:
         query = Collision.query
         match (id, h3_index, k, nta2020_id):
             case (None, None, None, None):
@@ -116,6 +117,19 @@ class CollisionService:
             query = query.filter(start_date <= Collision.date)
         if end_date is not None:
             query = query.filter(Collision.date <= end_date)
+        match (start_time, end_time):
+            case (None, None):
+                pass
+            case (start_time, None):
+                query = query.filter(start_time <= Collision.time)
+            case (None, end_time):
+                query = query.filter(Collision.time <= end_time)
+            case (start_time, end_time) if start_time < end_time:
+                query = query.filter(and_(start_time <= Collision.time, Collision.time <= end_time))
+            case (start_time, end_time) if start_time > end_time:
+                query = query.filter(or_(start_time <= Collision.time, Collision.time <= end_time))
+            case _:  # start_time == end_time
+                query = query.filter(Collision.time == start_time)
         return query.all()
 
     @staticmethod
@@ -136,8 +150,9 @@ class CustomEncoder(JSONEncoder):
 
 class SummaryService:
     @staticmethod
-    def get_summary(start_date: Optional[date], end_date: Optional[date], predicate: Optional[Any] = None,
-                    distinct_columns: Iterable = (), additional_columns: Iterable = (),
+    def get_summary(start_date: Optional[date] = None, end_date: Optional[date] = None,
+                    start_time: Optional[time] = None, end_time: Optional[time] = None,
+                    predicate: Optional[Any] = None, distinct_columns: Iterable = (), additional_columns: Iterable = (),
                     join_model: Optional[db.Model] = None, join_clause: Optional[Any] = None) -> list[dict[str, Any]]:
         query = Collision.query
         if join_model or join_clause:
@@ -152,6 +167,19 @@ class SummaryService:
             query = query.where(start_date <= Collision.date)
         if end_date:
             query = query.where(Collision.date <= end_date)
+        match (start_time, end_time):
+            case (None, None):
+                pass
+            case (start_time, None):
+                query = query.where(start_time <= Collision.time)
+            case (None, end_time):
+                query = query.where(Collision.time <= end_time)
+            case (start_time, end_time) if start_time < end_time:
+                query = query.where(and_(start_time <= Collision.time, Collision.time <= end_time))
+            case (start_time, end_time) if start_time > end_time:
+                query = query.where(or_(start_time <= Collision.time, Collision.time <= end_time))
+            case _:  # start_time == end_time
+                query = query.where(Collision.time == start_time)
         if distinct_columns:
             query = query.group_by(*distinct_columns) \
                          .order_by(*distinct_columns)
@@ -188,6 +216,7 @@ class SummaryService:
     @staticmethod
     def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
                        start_date: Optional[date], end_date: Optional[date],
+                       start_time: Optional[time], end_time: Optional[time],
                        include_collision_locations: Optional[bool]) -> list[dict[str, Any]]:
         match (h3_index, k, nta2020_id):
             case (None, None, None):
@@ -206,13 +235,14 @@ class SummaryService:
                                   .label('collision_locations'),) \
                              if include_collision_locations \
                              else ()
-        return SummaryService.get_summary(start_date, end_date,
+        return SummaryService.get_summary(start_date, end_date, start_time, end_time,
                                           predicate, (Collision.h3_index,),
                                           additional_columns)
 
     @staticmethod
     def get_nta2020_summary(nta2020_id: Optional[str], boro_id: Optional[int],
-                            start_date: Optional[date], end_date: Optional[date]) -> list[dict[str, Any]]:
+                            start_date: Optional[date], end_date: Optional[date],
+                            start_time: Optional[time], end_time: Optional[time]) -> list[dict[str, Any]]:
         match (nta2020_id, boro_id):
             case (None, None):
                 arguments = {}
@@ -224,13 +254,14 @@ class SummaryService:
                              'predicate': NTA2020.boro_id == boro_id}
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
-        return SummaryService.get_summary(start_date, end_date, distinct_columns=(Collision.nta2020_id,), **arguments)
+        return SummaryService.get_summary(start_date, end_date, start_time, end_time,
+                                          distinct_columns=(Collision.nta2020_id,), **arguments)
 
     @staticmethod
-    def get_boro_summary(boro_id: Optional[int], start_date: Optional[date], end_date: Optional[date]) \
-            -> list[dict[str, Any]]:
+    def get_boro_summary(boro_id: Optional[int], start_date: Optional[date], end_date: Optional[date],
+                         start_time: Optional[time], end_time: Optional[time]) -> list[dict[str, Any]]:
         predicate = NTA2020.boro_id == boro_id \
                     if boro_id \
                     else None
-        return SummaryService.get_summary(start_date, end_date, predicate, (NTA2020.boro_id,),
+        return SummaryService.get_summary(start_date, end_date, start_time, end_time, predicate, (NTA2020.boro_id,),
                                           join_model=NTA2020, join_clause=NTA2020.id == Collision.nta2020_id)

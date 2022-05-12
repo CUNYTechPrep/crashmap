@@ -1,6 +1,7 @@
-from datetime import date, time
+from dateutil.parser import isoparser
 from os import getenv
 from flask import Flask, jsonify, make_response, request, Response
+from toolz import juxt, pipe
 from typing import Any, Optional
 
 from models import db
@@ -21,6 +22,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         app.config['SQLALCHEMY_RECORD_QUERIES'] = True
     db.init_app(app)
 
+    parse_isodate, parse_isotime = pipe(isoparser(),
+                                        juxt(lambda _: _.parse_isodate,
+                                             lambda _: _.parse_isotime))
+
     def bool_from_str(value: Optional[str]) -> Optional[bool]:
         match value.lower():
             case None:
@@ -33,8 +38,8 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                 raise ValueError(f'{value!r} could not be converted to type bool.')
 
     def get_all_request_args(expected_args: dict[str, Any]) -> dict[str, Any]:
-        return {key: request.args.get(key, None, type)
-                for key, type in expected_args.items()}
+        return {key: request.args.get(key, None, parser)
+                for key, parser in expected_args.items()}
 
     def make_geojson_response(obj: dict | list) -> Response:
         response = make_response({'type': 'FeatureCollection',
@@ -78,8 +83,11 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
                                           'h3_index': int,
                                           'k': int,
                                           'nta2020_id': str,
-                                          'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat})
+                                          'start_date': parse_isodate,
+                                          'end_date': parse_isodate,
+                                          'start_time': parse_isotime,
+                                          'end_time': parse_isotime})
+        print(arguments)
         return jsonify(CollisionService.get_collision(**arguments))
 
     @app.route('/api/h3_summary.json', methods=['GET'])
@@ -87,8 +95,10 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         arguments = get_all_request_args({'h3_index': int,
                                           'k': int,
                                           'nta2020_id': str,
-                                          'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat,
+                                          'start_date': parse_isodate,
+                                          'end_date': parse_isodate,
+                                          'start_time': parse_isotime,
+                                          'end_time': parse_isotime,
                                           'include_collision_locations': bool_from_str})
         return jsonify(SummaryService.get_h3_summary(**arguments))
 
@@ -96,21 +106,27 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
     def nta2020_summary_as_json() -> Response:
         arguments = get_all_request_args({'nta2020_id': str,
                                           'boro_id': int,
-                                          'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat})
+                                          'start_date': parse_isodate,
+                                          'end_date': parse_isodate,
+                                          'start_time': parse_isotime,
+                                          'end_time': parse_isotime})
         return jsonify(SummaryService.get_nta2020_summary(**arguments))
 
     @app.route('/api/boro_summary.json', methods=['GET'])
     def boro_summary_as_json() -> Response:
         arguments = get_all_request_args({'boro_id': int,
-                                          'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat})
+                                          'start_date': parse_isodate,
+                                          'end_date': parse_isodate,
+                                          'start_time': parse_isotime,
+                                          'end_time': parse_isotime})
         return jsonify(SummaryService.get_boro_summary(**arguments))
 
     @app.route('/api/city_summary.json', methods=['GET'])
     def city_summary_as_json() -> Response:
-        arguments = get_all_request_args({'start_date': date.fromisoformat,
-                                          'end_date': date.fromisoformat})
+        arguments = get_all_request_args({'start_date': parse_isodate,
+                                          'end_date': parse_isodate,
+                                          'start_time': parse_isotime,
+                                          'end_time': parse_isotime})
         return jsonify(SummaryService.get_summary(**arguments))
 
     return app
