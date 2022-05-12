@@ -9,6 +9,7 @@ from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
 from sqlalchemy import and_, func, join, or_, select
+from sqlalchemy.types import JSON
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
 
@@ -55,11 +56,13 @@ class GeoService:
         return [*map(dict, db.session.execute(sql_statement))]
 
     @staticmethod
-    def get_boro(id: Optional[int]) -> list[Boro]:
+    def get_boro(id: Optional[int]) -> dict:
         query = Boro.query
         if id is not None:
-            query = query.filter(Boro.id == id)
-        return query.all()
+            query = query.where(Boro.id == id)
+        columns = (func.json_agg(geo_func.ST_AsGeoJSON(Boro).cast(JSON)).label('geojson'),)
+        return {'type': 'FeatureCollection',
+                'features': [dict(value) for value in query.value(*columns)]}
 
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> list[NTA2020]:
