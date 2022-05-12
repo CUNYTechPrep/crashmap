@@ -29,17 +29,7 @@ function AllCity(props) {
     </div>
   );
 }
-function Rank(props) {
-  return (
-    <div>
-      <ListGroup>
-        <ListGroup.Item variant='primary'>
-          {props.name} : {props.total}
-        </ListGroup.Item>
-      </ListGroup>
-    </div>
-  );
-}
+
 function Con(props) {
   return (
     <div>
@@ -143,59 +133,7 @@ class Overview extends Component {
             borough: json,
           });
         });
-      fetch(
-        `${api_prefix}boro_summary.json?start_date=2020-01-01&end_date=2020-01-31`
-      )
-        .then(function (res) {
-          return res.json();
-        })
-        .then((json) => {
-          console.log(json);
-          let obj = json.map((sum) => ({
-            id: sum.boro_id,
-            collision: sum.collisions,
-          }));
-          console.log(obj);
-          let obj2 = [];
 
-          for (let x = 0; x < obj.length; x++) {
-            switch (x) {
-              case 0:
-                obj2.push({ id: 'Manhattan', coll: obj[x].collision });
-
-                break;
-              case 1:
-                obj2.push({ id: 'Bronx', coll: obj[x].collision });
-
-                break;
-              case 2:
-                obj2.push({ id: 'Brooklyn', coll: obj[x].collision });
-
-                break;
-              case 3:
-                obj2.push({ id: 'Queens', coll: obj[x].collision });
-
-                break;
-              case 4:
-                obj2.push({ id: 'Staten Island', coll: obj[x].collision });
-
-                break;
-              default:
-                console.log('not it!');
-            }
-          }
-          obj2.sort((a, b) => {
-            if (a.coll < b.coll) {
-              return 1;
-            } else {
-              return -1;
-            }
-          });
-          console.log(obj2);
-          this.setState({
-            boroughSummary: obj2,
-          });
-        });
       fetch(
         `${api_prefix}nta2020.geojson?boro_id=${this.props.selectedBorough.value}`
       )
@@ -253,11 +191,6 @@ class Overview extends Component {
   render() {
     return (
       <div>
-        <div>
-          {this.state.boroughSummary.map((rank, i) => (
-            <Rank name={rank.id} total={rank.coll}></Rank>
-          ))}
-        </div>
         <div className=''>
           {' '}
           {this.state.borough.map((content, i) => (
