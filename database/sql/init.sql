@@ -11,6 +11,9 @@
 CREATE TABLE IF NOT EXISTS boro (
     id INTEGER NOT NULL PRIMARY KEY,
     name VARCHAR NOT NULL UNIQUE,
+    representative_point REAL ARRAY[2] NOT NULL CHECK (array_ndims(representative_point) = 1 AND cardinality(representative_point) = 2),
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
+    bounds REAL[2][2] NOT NULL CHECK (array_ndims(bounds) = 2 AND array_length(bounds, 1) = 2 AND cardinality(bounds) = 4),
     geometry geometry NOT NULL CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     land_geometry geometry NOT NULL CHECK (geometrytype(land_geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text]))--,
     --CONSTRAINT ck_boro_geometry_covers_land_geometry CHECK (st_covers(geometry, land_geometry))
@@ -20,6 +23,9 @@ CREATE TABLE IF NOT EXISTS nta2020 (
     id VARCHAR(6) NOT NULL PRIMARY KEY CHECK (id ~ '^(BK|BX|MN|QN|SI)(\d{4})?$'),
     name VARCHAR UNIQUE,
     boro_id INTEGER NOT NULL,
+    representative_point REAL ARRAY[2] NOT NULL CHECK (array_ndims(representative_point) = 1 AND cardinality(representative_point) = 2),
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
+    bounds REAL[2][2] NOT NULL CHECK (array_ndims(bounds) = 2 AND array_length(bounds, 1) = 2 AND cardinality(bounds) = 4),
     geometry geometry NOT NULL CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     CONSTRAINT fk_nta2020_boro_id FOREIGN KEY (boro_id) REFERENCES boro(id)
 );
@@ -27,6 +33,7 @@ CREATE TABLE IF NOT EXISTS nta2020 (
 CREATE TABLE IF NOT EXISTS h3 (
     h3_index BIGINT NOT NULL PRIMARY KEY,
     only_water BOOLEAN NOT NULL,
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
     geometry geometry(polygon) NOT NULL
 );
 
@@ -65,10 +72,10 @@ CREATE TABLE IF NOT EXISTS vehicle (
     driver_license_jurisdiction VARCHAR,
     pre_crash VARCHAR,
     point_of_impact VARCHAR,
-    damages VARCHAR ARRAY CHECK (array_length(damages, 1) BETWEEN 1 AND 4),
+    damages VARCHAR ARRAY CHECK (array_ndims(damages) = 1 AND cardinality(damages) BETWEEN 1 AND 4),
     public_property_damage VARCHAR,
     public_property_damage_type VARCHAR,
-    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
+    contributing_factors VARCHAR ARRAY CHECK (array_ndims(contributing_factors) = 1 AND cardinality(contributing_factors) IN (1, 2)),
     CONSTRAINT fk_vehicle_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE
 );
 
@@ -89,7 +96,7 @@ CREATE TABLE IF NOT EXISTS person (
     action VARCHAR,
     complaint VARCHAR,
     role VARCHAR,
-    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
+    contributing_factors VARCHAR ARRAY CHECK (array_ndims(contributing_factors) = 1 AND cardinality(contributing_factors) IN (1, 2)),
     sex VARCHAR,
     CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE,
     CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id) ON DELETE CASCADE,
