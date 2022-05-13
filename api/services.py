@@ -228,23 +228,27 @@ class SummaryService:
         return [*map(dict, query.values(*columns))]
 
     @staticmethod
-    def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
+    def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], boro_id: Optional[int],
                        rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
                        start_date: Optional[date], end_date: Optional[date],
                        start_time: Optional[time], end_time: Optional[time],
                        include_collision_locations: Optional[bool]) -> list[dict[str, Any]]:
-        match (h3_index, k, nta2020_id, rectangle):
-            case (None, None, None, None):
+        match (h3_index, k, nta2020_id, boro_id, rectangle):
+            case (None, None, None, None, None):
                 arguments = {'predicate': Collision.h3_index.is_not(None)}
-            case (h3_index, k, None, None) if k is None or k >= 0:
+            case (h3_index, k, None, None, None) if k is None or k >= 0:
                 if k:
                     arguments = {'predicate': Collision.h3_index.in_(map(string_to_h3,
                                                                          k_ring(h3_to_string(h3_index), k)))}
                 else:
                     arguments = {'predicate': Collision.h3_index == h3_index}
-            case (None, None, nta2020_id, None):
+            case (None, None, nta2020_id, None, None):
                 arguments = {'predicate': Collision.nta2020_id.like(nta2020_id)}
-            case (None, None, None, rectangle):
+            case (None, None, None, boro_id, None):
+                arguments = {'join_model': NTA2020,
+                             'join_clause': Collision.nta2020_id == NTA2020.id,
+                             'predicate': NTA2020.boro_id == boro_id}
+            case (None, None, None, None, rectangle):
                 arguments = {'join_model': H3,
                              'join_clause': H3.h3_index == Collision.h3_index,
                              'predicate': geo_func.ST_Intersects(geo_func.ST_MakeEnvelope(*chain(*rectangle)),

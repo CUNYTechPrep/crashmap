@@ -102,6 +102,7 @@ def create_app() -> Flask:  # TODO: Move views to a separate file
         arguments = get_all_request_args({'h3_index': int,
                                           'k': int,
                                           'nta2020_id': str,
+                                          'boro_id': int,
                                           'rectangle': parse_location_pair,
                                           'start_date': parse_isodate,
                                           'end_date': parse_isodate,
