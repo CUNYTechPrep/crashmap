@@ -230,8 +230,8 @@ const BarChart = (props) => {
     datasets: [
       {
         label: 'Collisions',
-        data: chart?.map((x) => x.collisions),
-        // data: [1, 2, 3, 4, 5],
+        // data: chart?.map((x) => x.collisions),
+        data: [1, 2, 3, 4, 5],
         backgroundColor: [
           'rgba(100,178,71,0.2)', //MN
           'rgba(192,120,98, 0.2)', //BX

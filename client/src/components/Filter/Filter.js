@@ -33,84 +33,124 @@ class Filter extends Component {
     super(props);
     this.state = {
       boroughSummary: [],
+      borough: [],
     };
   }
 
   componentDidMount() {
     const api_prefix = process.env.REACT_APP_API_PROXY_URL_PREFIX;
+    let arr2 = []
+    let arr3 = []
     console.log("yup");
     fetch(
-      `${api_prefix}boro_summary.json?start_date=2020-01-01&end_date=2020-01-31`
+      `${api_prefix}boro_summary.json?boro_id=1&start_date=2020-01-01&end_date=2020-01-31`
+    )
+    .then(function (res){
+      return res.json();
+    })
+    .then((json)=>{
+      console.log(json)
+      arr3 = {
+        id: '1',
+        collision: json[0].collisions,
+        name: 'Manhattan'
+      }
+      arr2.push(arr3)
+      console.log(arr3)
+    })
+    fetch(
+      `${api_prefix}boro_summary.json?boro_id=2&start_date=2020-01-01&end_date=2020-01-31`
+    )
+    .then(function (res){
+      return res.json();
+    })
+    .then((json)=>{
+      console.log(json)
+      arr3 = {
+        id: '2',
+        collision: json[0].collisions,
+        name: 'Bronx'
+      }
+      arr2.push(arr3)
+      console.log(arr2)
+    })
+    fetch(
+      `${api_prefix}boro_summary.json?boro_id=3&start_date=2020-01-01&end_date=2020-01-31`
+    )
+    .then(function (res){
+      return res.json();
+    })
+    .then((json)=>{
+      console.log(json)
+      arr3 = {
+        id: '3',
+        collision: json[0].collisions,
+        name: 'Brooklyn'
+      }
+      arr2.push(arr3)
+      console.log(arr2)
+    })
+    fetch(
+      `${api_prefix}boro_summary.json?boro_id=4&start_date=2020-01-01&end_date=2020-01-31`
+    )
+    .then(function (res){
+      return res.json();
+    })
+    .then((json)=>{
+      console.log(json)
+      arr3 = {
+        id: '4',
+        collision: json[0].collisions,
+        name: 'Queens'
+      }
+      arr2.push(arr3)
+      
+    })
+  
+    fetch(
+      `${api_prefix}boro_summary.json?boro_id=5&start_date=2020-01-01&end_date=2020-01-31`
     )
       .then(function (res) {
         return res.json();
       })
       .then((json) => {
         console.log(json);
-        let obj = json.map((sum) => ({
-          id: sum.boro_id,
-          collision: sum.collisions,
-        }));
-        console.log(obj);
-        let obj2 = [];
-
-        for (let x = 0; x < obj.length; x++) {
-          switch (x) {
-            case 0:
-              obj2.push({
-                id: "Manhattan",
-                coll: obj[x].collision,
-                boro_id: obj[x].id,
-              });
-
-              break;
-            case 1:
-              obj2.push({
-                id: "Bronx",
-                coll: obj[x].collision,
-                boro_id: obj[x].id,
-              });
-
-              break;
-            case 2:
-              obj2.push({
-                id: "Brooklyn",
-                coll: obj[x].collision,
-                boro_id: obj[x].id,
-              });
-
-              break;
-            case 3:
-              obj2.push({
-                id: "Queens",
-                coll: obj[x].collision,
-                boro_id: obj[x].id,
-              });
-
-              break;
-            case 4:
-              obj2.push({
-                id: "Staten Island",
-                coll: obj[x].collision,
-                boro_id: obj[x].id,
-              });
-
-              break;
-            default:
-              console.log("not it!");
-          }
+        arr3 = {
+          id: '5',
+          collision: json[0].collisions,
+          name: 'Staten Island'
         }
-        obj2.sort((a, b) => {
-          if (a.coll < b.coll) {
+        arr2.push(arr3)
+       
+        
+        console.log(this.state.borough)
+        let obj = [];
+        let obj3 = [];
+         let obj2 = [];
+      
+       
+        console.log(obj3);
+        console.log(obj)
+        console.log(arr2)
+        this.setState({
+          borough:arr2
+        })
+        this.state.borough.sort((a, b) => {
+          if (a.collision < b.collision) {
             return 1;
           } else {
             return -1;
           }
+       
         });
-        console.log(obj2);
+        console.log(arr2)
+      
+        console.log(this.state.borough)
+
         this.setState({
-          boroughSummary: obj2,
+          boroughSummary: this.state.borough,
         });
+        console.log(this.state.boroughSummary)
       });
   }
   currentBorough = (event) => {
@@ -144,8 +184,8 @@ class Filter extends Component {
               counter={++i}
               key={rank.key}
               list={rank.boro_id}
-              name={rank.id}
-              total={rank.coll}
+              name={rank.name}
+              total={rank.collision}
             ></Rank>
           ))}
         </div>

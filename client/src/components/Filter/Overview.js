@@ -3,6 +3,7 @@ import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { ListGroup, ListGroupItem } from 'react-bootstrap';
 
 
 const api_prefix = process.env.REACT_APP_API_PROXY_URL_PREFIX;
@@ -30,13 +31,198 @@ function AllCity(props) {
   );
 }
 
-function Con(props) {
-  return (
+function Choice(props){
+  const isThereInfo = props.isThereInfo
+  if(isThereInfo)
+  
+  {
+    return (  <div> 
+      {props.borough.map((content)=>        <Container>
+        <Row>
+          <Col>
+            {/* <h1 className='text-center'>{props.selected}</h1> */}
+          </Col>
+        </Row>
+        <Row>
+          <Col m={4}>
+            {' '}
+            {[
+              'Primary',
+              // 'Secondary',
+              // 'Success',
+              // 'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              // 'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem'}}
+              >
+             
+                <Card.Body>
+              <Card.Title>Collisions</Card.Title>
+                  <Card.Text key={content.keys} >
+                 {content.collisions} 
+                  
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            ))}
+          </Col>
+          <Col m={4}>
+            {[
+              // 'Primary',
+              // 'Secondary',
+              // 'Success',
+              'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              // 'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem' }}
+              >
+                <Card.Body>
+                <Card.Title>Individuals</Card.Title>
+                  <Card.Text>
+                   
+                     {content.people}
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            ))}
+          </Col>
+          <Col m={4}>
+            {[
+              // 'Primary',
+              // 'Secondary',
+              // 'Success',
+              // 'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem' }}
+              >
+                <Card.Body>
+                  <Card.Title>Vehicles</Card.Title>
+                  <Card.Text>
+              
+                     Vehicles: {content.vehicles}
+        
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            ))}
+          </Col>
+        </Row>
+      </Container>
+      )}
+      </div>);
+  }
+  else{
+    return <Before />;
+  }
+}
+
+function Before(props){
+  return(
     <div>
       <Container>
         <Row>
+          <Col md={4}>
+            {' '}
+            {[
+              'Primary',
+              // 'Secondary',
+              // 'Success',
+              // 'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              // 'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem' }}
+              >
+                <Card.Header>Enter Borough</Card.Header>
+               
+              </Card>
+            ))}
+            
+          </Col>
+          <Col md = {4}>
+            {' '}
+            {[
+              // 'Primary',
+              // 'Secondary',
+              // 'Success',
+              'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              // 'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem' }}
+              >
+                <Card.Header>Enter Borough</Card.Header>
+               
+              </Card>
+            ))}
+          </Col>
+          <Col md={4}>
+            {' '}
+            {[
+              // 'Primary',
+              // 'Secondary',
+              // 'Success',
+              // 'Danger',
+              // 'Warning',
+              // 'Info',
+              // 'Light',
+              'Dark',
+            ].map((variant) => (
+              <Card className='text-center '
+                bg={variant.toLowerCase()}
+                text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
+                style={{ width: '12rem' }}
+              >
+                <Card.Header>Enter Borough</Card.Header>
+               
+              </Card>
+            ))}
+          </Col>
+         
+        </Row>
+      </Container>
+    </div>
+  );
+}
+function Con(props) {
+
+  return (
+
+    <div>
+    
+      <Container>
+        <Row>
           <Col>
-            <h1 className='text-center'>Overview of {props.currentb}</h1>
+            {/* <h1 className='text-center'>{props.selected}</h1> */}
           </Col>
         </Row>
         <Row>
@@ -57,8 +243,9 @@ function Con(props) {
                 text={variant.toLowerCase() === 'light' ? 'dark' : 'white'}
                 style={{ width: '18rem' }}
               >
+                <Card.Header>{props.many}</Card.Header>
                 <Card.Body>
-                  <Card.Title>How many collisions?</Card.Title>
+                  <Card.Title></Card.Title>
                   <Card.Text key={props.keys}>
                     From {props.start} through {props.end}, There has been a
                     total of collisions {props.crashes} involving{' '}
@@ -85,7 +272,7 @@ function Con(props) {
                 style={{ width: '18rem' }}
               >
                 <Card.Body>
-                  <Card.Title>Who were the people involved?</Card.Title>
+                  <Card.Title>{props.peoples}</Card.Title>
                   <Card.Text>
                     From {props.start} through {props.end}, There has been a
                     total of {props.people} involved. There was{' '}
@@ -114,13 +301,20 @@ class Overview extends Component {
       boroughSummary: [],
       currentNeighbor: [],
       NeighborCollision: [],
+      selected:" ",
+      peoples:"Click a borough",
+      many:"Click a borough",
+      isThereInfo: false,
     };
   }
-
+componentDidMount(){
+  console.log(this.state.borough)
+}
   componentDidUpdate(prevProps) {
     if (prevProps.selectedBorough !== this.props.selectedBorough) {
+   
       console.log(this.props.selectedBorough);
-      console.log(this.props.selectedBorough.label);
+      console.log(this.props.selectedBorough.value);
       fetch(
         `${api_prefix}boro_summary.json?boro_id=${this.props.selectedBorough.value}&start_date=2020-01-01&end_date=2020-01-31`
       )
@@ -131,6 +325,11 @@ class Overview extends Component {
           console.log(json);
           this.setState({
             borough: json,
+            selected: `Overview of ${this.props.selectedBorough.label}`,
+            peoples:"Who was involved?",
+            many:"How many collisions?",
+         
+
           });
         });
 
@@ -142,17 +341,19 @@ class Overview extends Component {
         })
         .then((json) => {
           arr = [];
-
-          json.features.map((summary) => arr.push(summary.id));
-          arr2 = json.features.map((summary) => ({
+          console.log(json.features)
+          json.features.map((summary) => arr.push(summary.properties));
+          console.log(arr);
+          arr2 = arr.map((summary) => ({
             id: summary.id,
             town: summary.name,
           }));
           console.log(arr2);
-          console.log(arr);
+        
           console.log(json.features);
           this.setState({
             currentNeighbor: arr2,
+            isThereInfo:true
           });
           console.log(this.state.currentNeighbor);
         });
@@ -189,25 +390,37 @@ class Overview extends Component {
   }
 
   render() {
+
     return (
       <div>
-        <div className=''>
+        <div>
+          <Choice
+          borough = {this.state.borough}
+          isThereInfo={this.state.isThereInfo}
+          many={this.state.many}
+          peoples={this.state.peoples}
+          // currentb={this.props.selectedBorough.label}
+          />
+        </div>
+        {/* <div className=''>
           {' '}
           {this.state.borough.map((content, i) => (
-            <Con
+            <Con 
               key={content.keys}
               crashes={content.collisions}
               start={content.start_date}
               end={content.end_date}
               vehicles={content.vehicles}
               keys={content.key}
-              currentb={this.props.selectedBorough.label}
+              selected={this.state.selected}
+              peoples={this.state.peoples}
               people={content.people}
               cyclists={content.cyclists}
               occupants={content.occupants}
+              many={this.state.many}
             />
           ))}{' '}
-        </div>
+        </div> */}
         {/* <div className=''>{this.state.currentNeighbor.map((info,i)=> <AllCity collide={info.id } hood={info.town}
               ></AllCity>)}</div> */}
       </div>
