@@ -11,6 +11,9 @@
 CREATE TABLE IF NOT EXISTS boro (
     id INTEGER NOT NULL PRIMARY KEY,
     name VARCHAR NOT NULL UNIQUE,
+    representative_point REAL ARRAY[2] NOT NULL CHECK (array_ndims(representative_point) = 1 AND cardinality(representative_point) = 2),
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
+    bounds REAL[2][2] NOT NULL CHECK (array_ndims(bounds) = 2 AND array_length(bounds, 1) = 2 AND cardinality(bounds) = 4),
     geometry geometry NOT NULL CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     land_geometry geometry NOT NULL CHECK (geometrytype(land_geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text]))--,
     --CONSTRAINT ck_boro_geometry_covers_land_geometry CHECK (st_covers(geometry, land_geometry))
@@ -20,6 +23,9 @@ CREATE TABLE IF NOT EXISTS nta2020 (
     id VARCHAR(6) NOT NULL PRIMARY KEY CHECK (id ~ '^(BK|BX|MN|QN|SI)(\d{4})?$'),
     name VARCHAR UNIQUE,
     boro_id INTEGER NOT NULL,
+    representative_point REAL ARRAY[2] NOT NULL CHECK (array_ndims(representative_point) = 1 AND cardinality(representative_point) = 2),
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
+    bounds REAL[2][2] NOT NULL CHECK (array_ndims(bounds) = 2 AND array_length(bounds, 1) = 2 AND cardinality(bounds) = 4),
     geometry geometry NOT NULL CHECK (geometrytype(geometry) = ANY (ARRAY['MULTIPOLYGON'::text, 'POLYGON'::text])),
     CONSTRAINT fk_nta2020_boro_id FOREIGN KEY (boro_id) REFERENCES boro(id)
 );
@@ -27,6 +33,7 @@ CREATE TABLE IF NOT EXISTS nta2020 (
 CREATE TABLE IF NOT EXISTS h3 (
     h3_index BIGINT NOT NULL PRIMARY KEY,
     only_water BOOLEAN NOT NULL,
+    centroid REAL ARRAY[2] NOT NULL CHECK (array_ndims(centroid) = 1 AND cardinality(centroid) = 2),
     geometry geometry(polygon) NOT NULL
 );
 

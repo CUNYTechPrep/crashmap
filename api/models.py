@@ -16,15 +16,21 @@ h3_nta2020 = db.Table('h3_nta2020',
 class Boro(db.Model):
     id: int
     name: str
+    representative_point: tuple[float]
+    centroid: tuple[float]
+    bounds: tuple[tuple[float]]
     geometry: WKBElement
     land_geometry: WKBElement
 
     __tablename__ = 'boro'
     id = db.Column(db.INTEGER(), nullable=False, primary_key=True)
     name = db.Column(db.VARCHAR(), nullable=False)
+    representative_point = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
+    centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
+    bounds = db.Column(db.ARRAY(db.REAL(), as_tuple=True, dimensions=2))
     geometry = ga2.Column(ga2.Geometry(), nullable=False)
     land_geometry = ga2.Column(ga2.Geometry(), nullable=False)
-    # nta2020s = db.relationship('NTA2020', backref='boro', lazy=True)
+    nta2020s = db.relationship('NTA2020', backref='boro', lazy=True, viewonly=True)
 
 
 @dataclass
@@ -32,12 +38,18 @@ class NTA2020(db.Model):
     id: int
     name: Optional[str]
     boro_id: int
+    representative_point: tuple[float]
+    centroid: tuple[float]
+    bounds: tuple[tuple[float]]
     geometry: WKBElement
 
     __tablename__ = 'nta2020'
     id = db.Column(db.VARCHAR(6), nullable=False, primary_key=True)
     name = db.Column(db.VARCHAR(), unique=True)
     boro_id = db.Column(db.INTEGER(), db.ForeignKey('boro.id'), nullable=False)
+    representative_point = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
+    centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
+    bounds = db.Column(db.ARRAY(db.REAL(), as_tuple=True, dimensions=2))
     geometry = ga2.Column(ga2.Geometry())
     h3s = db.relationship('H3', secondary=h3_nta2020, backref=db.backref('h3'), viewonly=True)
 
@@ -46,11 +58,13 @@ class NTA2020(db.Model):
 class H3(db.Model):
     h3_index: int
     only_water: bool
+    centroid: tuple[float]
     geometry: WKBElement
 
     __tablename__ = 'h3'
     h3_index = db.Column(db.BIGINT(), nullable=False, primary_key=True)
     only_water = db.Column(db.BOOLEAN(), nullable=False)
+    centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
     geometry = ga2.Column(ga2.Geometry('POLYGON'), nullable=False)
     nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref=db.backref('nta2020'), viewonly=True)
 
