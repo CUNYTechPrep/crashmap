@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS vehicle (
     damages VARCHAR ARRAY CHECK (array_length(damages, 1) BETWEEN 1 AND 4),
     public_property_damage VARCHAR,
     public_property_damage_type VARCHAR,
-    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
+    contributing_factors VARCHAR ARRAY CHECK (cardinality(contributing_factors) IN (1, 2)),
     CONSTRAINT fk_vehicle_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE
 );
 
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS person (
     action VARCHAR,
     complaint VARCHAR,
     role VARCHAR,
-    contributing_factors VARCHAR ARRAY CHECK (array_length(contributing_factors, 1) IN (1, 2)),
+    contributing_factors VARCHAR ARRAY CHECK (cardinality(contributing_factors) IN (1, 2)),
     sex VARCHAR,
     CONSTRAINT fk_person_collision_id FOREIGN KEY (collision_id) REFERENCES collision(id) ON DELETE CASCADE,
     CONSTRAINT fk_person_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES vehicle(id) ON DELETE CASCADE,
