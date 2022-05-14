@@ -41,13 +41,14 @@ class GeoService:
 
     @staticmethod
     def get_boro(id: Optional[int]) -> dict:
-        query = Boro.query
+        subquery = db.session.query(Boro, func.array_agg(NTA2020.id).label('nta2020s')) \
+                             .select_from(join(Boro, NTA2020))
         if id is not None:
-            query = query.where(Boro.id == id)
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(Boro).cast(JSON)).label('feature'))]}
+            subquery = subquery.filter(Boro.id == id)
+        subquery = subquery.group_by(Boro) \
+                           .subquery()
+        return GeoService.query_geojson_agg(subquery) \
+                         .scalar()
 
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> dict:
