@@ -19,42 +19,23 @@ from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
 class GeoService:
     @staticmethod
     def get_all() -> dict:
-        sql_statement = '''SELECT 'Feature' AS type,
-                                  json_build_object(
-                                      'id', b.id,
-                                      'name', b.name,
-                                      'nta2020s', json_build_object(
-                                          'type', 'FeatureCollection',
-                                          'features', (
-                                              SELECT array_agg(
-                                                  json_build_object(
-                                                      'type', 'Feature',
-                                                      'properties', json_build_object(
-                                                          'id', n.id,
-                                                          'name', n.name,
-                                                          'h3s', json_build_object(
-                                                              'type', 'FeatureCollection',
-                                                              'features', (
-                                                                  SELECT array_agg(
-                                                                      json_build_object(
-                                                                         'type', 'Feature',
-                                                                         'properties', json_build_object(
-                                                                             'h3_index', h.h3_index,
-                                                                             'only_water', h.only_water),
-                                                                         'geometry', json(h.geometry)))
-                                                                  FROM h3_nta2020 hn
-                                                                  JOIN h3 h ON hn.h3_index = h.h3_index
-                                                                  WHERE hn.nta2020_id = n.id))),
-                                                      'geometry', json(n.geometry)))
-                                              FROM nta2020 n
-                                              WHERE n.boro_id = b.id)),
-                                      'land_geometry', json_build_object(
-                                          'type', 'Feature',
-                                          'geometry', json(b.land_geometry))) AS properties,
-                                  json(b.geometry) AS geometry
-                           FROM boro b'''
-        return {'type': 'FeatureCollection',
-                'features': [*map(dict, db.session.execute(sql_statement))]}
+        sql_statement = '''SELECT json_build_object('type', 'FeatureCollection',
+                                                    'features', json_agg(st_asgeojson(b)::json)) AS geojson
+                           FROM (SELECT boro.*,
+                                        json_build_object('type', 'FeatureCollection',
+                                                          'features', json_agg(st_asgeojson(n)::json)) AS nta2020s
+                                 FROM (SELECT nta2020.*,
+                                              json_build_object('type', 'FeatureCollection',
+                                                                'features', json_agg(h.geojson)) AS h3s
+                                       FROM (SELECT h3_nta2020.nta2020_id,
+                                                    st_asgeojson(h3)::json AS geojson
+                                             FROM h3
+                                             JOIN h3_nta2020 ON h3.h3_index = h3_nta2020.h3_index) AS h
+                                       JOIN nta2020 ON nta2020.id = h.nta2020_id
+                                       GROUP BY nta2020.id) AS n
+                                 JOIN boro ON n.boro_id = boro.id
+                                 GROUP BY boro.id) AS b;'''
+        return db.session.execute(sql_statement).scalar()
 
     @staticmethod
     def get_boro(id: Optional[int]) -> dict:
