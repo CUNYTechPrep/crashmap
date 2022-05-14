@@ -1,6 +1,7 @@
 from dataclasses import asdict, is_dataclass
 from datetime import date, time
 from flask.json import JSONEncoder
+from flask_sqlalchemy import BaseQuery
 from functools import partial, reduce
 from geoalchemy2 import WKBElement
 from geoalchemy2 import func as geo_func
@@ -9,6 +10,7 @@ from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
 from sqlalchemy import and_, func, join, or_, select
+from sqlalchemy.sql import Selectable
 from sqlalchemy.types import JSON
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
@@ -62,33 +64,38 @@ class GeoService:
                 raise ValueError('Invalid combination of arguments provided.')
         subquery = subquery.group_by(NTA2020) \
                            .subquery()
-        return db.session.query(func.json_build_object('type',
-                                                       'FeatureCollection',
-                                                       'features',
-                                                       func.json_agg(geo_func.ST_AsGeoJSON(subquery).cast(JSON))
-                                                           .label('feature'))) \
+        return GeoService.query_geojson_agg(subquery) \
                          .scalar()
 
     @staticmethod
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
             -> dict:
-        query = H3.query
+        subquery = db.session.query(H3, func.array_agg(NTA2020.id).label('nta2020s')) \
+                             .select_from(join(join(H3, h3_nta2020), NTA2020))
         match (h3_index, k, nta2020_id):
             case (None, None, None):
                 pass
             case (h3_index, k, None) if k is None or k >= 0:
                 if k:
-                    query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                    query = subquery.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
                 else:
-                    query = query.filter(H3.h3_index == h3_index)
+                    query = subquery.filter(H3.h3_index == h3_index)
             case (None, None, nta2020_id):
-                query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
+                query = subquery.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
         if only_water is not None:
-            query = query.filter(H3.only_water == only_water)
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(H3).cast(JSON)).label('feature'))]}
+            query = subquery.filter(H3.only_water == only_water)
+        subquery = subquery.group_by(H3) \
+                           .subquery()
+        return GeoService.query_geojson_agg(subquery) \
+                         .scalar()
+
+    @staticmethod
+    def query_geojson_agg(query: Selectable) -> BaseQuery:
+        return db.session.query(func.json_build_object('type',
+                                                       'FeatureCollection',
+                                                       'features',
+                                                       func.json_agg(geo_func.ST_AsGeoJSON(query).cast(JSON))
+                                                           .label('feature')))
 
 
 class CollisionService:
