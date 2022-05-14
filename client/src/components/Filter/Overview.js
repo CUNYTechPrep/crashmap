@@ -47,9 +47,9 @@ function Choice(props) {
                     className="text-center"
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                    // style={{ width: "12rem" }}
+                    style={{ height: "120px" }}
                   >
-                    <Card.Body>
+                    <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
                       <Card.Text>Collisions</Card.Text>
                       <Card.Title key={content.keys}>
                         +{content.collisions}
@@ -67,9 +67,9 @@ function Choice(props) {
                     className="text-center "
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                    // style={{ width: "12rem" }}
+                    style={{ height: "120px" }}
                   >
-                    <Card.Body>
+                    <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
                       <Card.Text>Individuals</Card.Text>
                       <Card.Title>+{content.people}</Card.Title>
                     </Card.Body>
@@ -82,9 +82,9 @@ function Choice(props) {
                     className="text-center "
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                    // style={{ width: "12rem" }}
+                    style={{ height: "120px" }}
                   >
-                    <Card.Body>
+                    <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
                       <Card.Text>Vehicles</Card.Text>
                       <Card.Title>+{content.vehicles}</Card.Title>
                     </Card.Body>
@@ -116,12 +116,13 @@ function Before(props) {
           >
             {["Light"].map((variant) => (
               <Card
-                className="text-center "
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                // style={{ width: "12rem" }}
+                style={{ height: "120px" }}
               >
-                <Card.Header>Click Borough</Card.Header>
+                <Card.Title className="align-items-center d-flex justify-content-center h-100">
+                  Click Borough
+                </Card.Title>
               </Card>
             ))}
           </Col>
@@ -131,24 +132,26 @@ function Before(props) {
           >
             {["Light"].map((variant) => (
               <Card
-                className="text-center "
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                // style={{ width: "12rem" }}
+                style={{ height: "120px" }}
               >
-                <Card.Header>Click Borough</Card.Header>
+                <Card.Title className="align-items-center d-flex justify-content-center h-100">
+                  Click Borough
+                </Card.Title>
               </Card>
             ))}
           </Col>
           <Col p={4} style={{ paddingLeft: 0, paddingRight: 0 }}>
             {["Light"].map((variant) => (
               <Card
-                className="text-center "
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
-                // style={{ width: "12rem" }}
+                style={{ height: "120px" }}
               >
-                <Card.Header>Click Borough</Card.Header>
+                <Card.Title className="align-items-center d-flex justify-content-center h-100">
+                  Click Borough
+                </Card.Title>
               </Card>
             ))}
           </Col>
