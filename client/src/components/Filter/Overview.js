@@ -44,16 +44,16 @@ function Choice(props) {
               >
                 {["Light"].map((variant) => (
                   <Card
-                    className="text-center "
+                    className="text-center"
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
                     // style={{ width: "12rem" }}
                   >
                     <Card.Body>
-                      <Card.Title>Collisions</Card.Title>
-                      <Card.Text key={content.keys}>
-                        {content.collisions}
-                      </Card.Text>
+                      <Card.Text>Collisions</Card.Text>
+                      <Card.Title key={content.keys}>
+                        +{content.collisions}
+                      </Card.Title>
                     </Card.Body>
                   </Card>
                 ))}
@@ -70,8 +70,8 @@ function Choice(props) {
                     // style={{ width: "12rem" }}
                   >
                     <Card.Body>
-                      <Card.Title>Individuals</Card.Title>
-                      <Card.Text>{content.people}</Card.Text>
+                      <Card.Text>Individuals</Card.Text>
+                      <Card.Title>+{content.people}</Card.Title>
                     </Card.Body>
                   </Card>
                 ))}
@@ -85,8 +85,8 @@ function Choice(props) {
                     // style={{ width: "12rem" }}
                   >
                     <Card.Body>
-                      <Card.Title>Vehicles</Card.Title>
-                      <Card.Text>{content.vehicles}</Card.Text>
+                      <Card.Text>Vehicles</Card.Text>
+                      <Card.Title>+{content.vehicles}</Card.Title>
                     </Card.Body>
                   </Card>
                 ))}
