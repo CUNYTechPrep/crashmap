@@ -86,7 +86,7 @@ function Choice(props) {
                   >
                     <Card.Body>
                       <Card.Title>Vehicles</Card.Title>
-                      <Card.Text>Vehicles: {content.vehicles}</Card.Text>
+                      <Card.Text>{content.vehicles}</Card.Text>
                     </Card.Body>
                   </Card>
                 ))}
@@ -121,7 +121,7 @@ function Before(props) {
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 // style={{ width: "12rem" }}
               >
-                <Card.Header>Enter Borough</Card.Header>
+                <Card.Header>Click Borough</Card.Header>
               </Card>
             ))}
           </Col>
@@ -136,7 +136,7 @@ function Before(props) {
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 // style={{ width: "12rem" }}
               >
-                <Card.Header>Enter Borough</Card.Header>
+                <Card.Header>Click Borough</Card.Header>
               </Card>
             ))}
           </Col>
@@ -148,7 +148,7 @@ function Before(props) {
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 // style={{ width: "12rem" }}
               >
-                <Card.Header>Enter Borough</Card.Header>
+                <Card.Header>Click Borough</Card.Header>
               </Card>
             ))}
           </Col>
