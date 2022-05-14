@@ -5,6 +5,7 @@ import geopandas as gpd
 from geopandas import GeoDataFrame
 import lzma
 import numpy as np
+from operator import ne, or_
 from os import getenv
 import pandas as pd
 from pandas import DataFrame, Series
@@ -12,7 +13,7 @@ from shapely.geometry.base import BaseGeometry
 from smart_open import register_compressor, smart_open
 from sqlalchemy import create_engine, sql
 from sqlalchemy.engine import Engine
-from toolz import compose_left as compose, get, juxt, pipe, valmap
+from toolz import apply, compose_left as compose, get, identity, juxt, keyfilter, pipe, thread_last as thread, valmap
 from typing import Any, Callable, Optional, Sequence
 from urllib.parse import urlencode
 
@@ -139,6 +140,17 @@ def transform_data_sets(data_sets: dict[str, DataFrame], nyc_geometry: BaseGeome
     return {'collision': collision, 'vehicle': vehicle, 'person': person}
 
 
+def validate_foreign_key_relationships(data_set: dict[str, DataFrame]) \
+        -> tuple[dict[str, DataFrame], dict[str, DataFrame]]:
+    collision_ids = frozenset(data_set['collision'].index)
+    return thread(data_set,
+                  (keyfilter, partial(ne, 'collision')),
+                  juxt(partial(valmap, lambda data_frame: data_frame[data_frame.collision_id.isin(collision_ids)]),
+                       partial(valmap, lambda data_frame: data_frame[~data_frame.collision_id.isin(collision_ids)])),
+                  (map, apply, (partial(or_, data_set), identity)),
+                  tuple)
+
+
 def load_data(database_engine: Engine, data_set: dict[str, DataFrame]) -> None:
     start_date, end_date = pipe(data_set['collision'].date,
                                 pd.to_datetime,
@@ -175,8 +187,15 @@ def run() -> None:
         print(f'{sum(map(len, data_sets.values())):,} row(s) retrieved from NYC OpenData.')
         transformed_data_sets = transform_data_sets(data_sets, nyc_geometry)
         print(f'Transformed {sum(map(len, transformed_data_sets.values())):,} row(s).')
-        load_data(database_engine, transformed_data_sets)
-        print(f'{len(transformed_data_sets):,} data set(s) have been successfully loaded into the database.')
+        validated_data_sets, bad_data_sets = validate_foreign_key_relationships(transformed_data_sets)
+        thread(bad_data_sets,
+               dict.values,
+               (map, len),
+               sum,
+               '{:,} bad row(s) excluded.'.format,
+               print)
+        load_data(database_engine, validated_data_sets)
+        print(f'{len(validated_data_sets):,} data set(s) have been successfully loaded into the database.')
     except Exception as error:
         print(f'An error occurred during the update process: {error}')
     finally:
