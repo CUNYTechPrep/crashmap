@@ -84,62 +84,6 @@ class Map extends Component {
             return count;
           }
 
-          fetch(`${api_prefix}nta2020_summary.json`)
-            .then((res) => res.json())
-            .then((data) => {
-              manhattan_nta.features.forEach((nta) => {
-                nta.properties.collisionCount = countCollisions(data, nta);
-              });
-              bronx_nta.features.forEach((nta) => {
-                nta.properties.collisionCount = countCollisions(data, nta);
-              });
-              brooklyn_nta.features.forEach((nta) => {
-                nta.properties.collisionCount = countCollisions(data, nta);
-              });
-              queens_nta.features.forEach((nta) => {
-                nta.properties.collisionCount = countCollisions(data, nta);
-              });
-              statenIsland_nta.features.forEach((nta) => {
-                nta.properties.collisionCount = countCollisions(data, nta);
-              });
-              // console.dir(manhattan_nta);
-              if (!this.map.getSource("manhattan-neighborhoods")) {
-                this.map.addSource("manhattan-neighborhoods", {
-                  type: "geojson",
-                  data: manhattan_nta,
-                  generateId: true,
-                });
-              }
-              if (!this.map.getSource("bronx-neighborhoods")) {
-                this.map.addSource("bronx-neighborhoods", {
-                  type: "geojson",
-                  data: bronx_nta,
-                  generateId: true,
-                });
-              }
-              if (!this.map.getSource("brooklyn-neighborhoods")) {
-                this.map.addSource("brooklyn-neighborhoods", {
-                  type: "geojson",
-                  data: brooklyn_nta,
-                  generateId: true,
-                });
-              }
-              if (!this.map.getSource("queens-neighborhoods")) {
-                this.map.addSource("queens-neighborhoods", {
-                  type: "geojson",
-                  data: queens_nta,
-                  generateId: true,
-                });
-              }
-              if (!this.map.getSource("statenIsland-neighborhoods")) {
-                this.map.addSource("statenIsland-neighborhoods", {
-                  type: "geojson",
-                  data: statenIsland_nta,
-                  generateId: true,
-                });
-              }
-            });
-
           // get all boroughs
           fetch(`${api_prefix}boro.geojson`)
             .then((res) => res.json())
@@ -266,6 +210,62 @@ class Map extends Component {
                       0.6,
                     ],
                   },
+                });
+              }
+            });
+
+          fetch(`${api_prefix}nta2020_summary.json`)
+            .then((res) => res.json())
+            .then((data) => {
+              manhattan_nta.features.forEach((nta) => {
+                nta.properties.collisionCount = countCollisions(data, nta);
+              });
+              bronx_nta.features.forEach((nta) => {
+                nta.properties.collisionCount = countCollisions(data, nta);
+              });
+              brooklyn_nta.features.forEach((nta) => {
+                nta.properties.collisionCount = countCollisions(data, nta);
+              });
+              queens_nta.features.forEach((nta) => {
+                nta.properties.collisionCount = countCollisions(data, nta);
+              });
+              statenIsland_nta.features.forEach((nta) => {
+                nta.properties.collisionCount = countCollisions(data, nta);
+              });
+              // console.dir(manhattan_nta);
+              if (!this.map.getSource("manhattan-neighborhoods")) {
+                this.map.addSource("manhattan-neighborhoods", {
+                  type: "geojson",
+                  data: manhattan_nta,
+                  generateId: true,
+                });
+              }
+              if (!this.map.getSource("bronx-neighborhoods")) {
+                this.map.addSource("bronx-neighborhoods", {
+                  type: "geojson",
+                  data: bronx_nta,
+                  generateId: true,
+                });
+              }
+              if (!this.map.getSource("brooklyn-neighborhoods")) {
+                this.map.addSource("brooklyn-neighborhoods", {
+                  type: "geojson",
+                  data: brooklyn_nta,
+                  generateId: true,
+                });
+              }
+              if (!this.map.getSource("queens-neighborhoods")) {
+                this.map.addSource("queens-neighborhoods", {
+                  type: "geojson",
+                  data: queens_nta,
+                  generateId: true,
+                });
+              }
+              if (!this.map.getSource("statenIsland-neighborhoods")) {
+                this.map.addSource("statenIsland-neighborhoods", {
+                  type: "geojson",
+                  data: statenIsland_nta,
+                  generateId: true,
                 });
               }
             });
