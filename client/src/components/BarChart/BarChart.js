@@ -175,9 +175,9 @@
 
 // export default BarChart;
 
-import React, { useState, useEffect } from 'react';
-import { Bar } from 'react-chartjs-2';
-import Chart from 'chart.js/auto';
+import React, { useState, useEffect } from "react";
+import { Bar } from "react-chartjs-2";
+import Chart from "chart.js/auto";
 
 const BarChart = (props) => {
   const [chart, setChart] = useState({});
@@ -202,49 +202,49 @@ const BarChart = (props) => {
     } else {
       switch (props.selectedBorough.value) {
         case 2:
-          console.log('switch case bronx');
+          console.log("switch case bronx");
           break;
         case 3:
-          console.log('switch case brooklyn');
+          console.log("switch case brooklyn");
           break;
         case 1:
-          console.log('switch case manhattan');
+          console.log("switch case manhattan");
           break;
         case 4:
-          console.log('switch case queens');
+          console.log("switch case queens");
           break;
         case 5:
-          console.log('switch case staten island');
+          console.log("switch case staten island");
           break;
         default:
-          console.log('nothin here!');
+          console.log("nothin here!");
       }
     }
   }, [api_prefix, props]);
 
-  console.log('chart: ', chart);
+  console.log("chart: ", chart);
   // console.log('borough', selectedBorough);
 
   var data = {
-    labels: ['Manhattan', 'Bronx', 'Brooklyn', 'Queens', 'Staten Island'],
+    labels: ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"],
     datasets: [
       {
-        label: 'Collisions',
+        label: "Collisions",
         // data: chart?.map((x) => x.collisions),
         data: [1, 2, 3, 4, 5],
         backgroundColor: [
-          'rgba(100,178,71,0.2)', //MN
-          'rgba(192,120,98, 0.2)', //BX
-          'rgba(98,	123, 193, 0.2)', //BK
-          'rgba(192, 98, 170, 0.2)', //QN
-          'rgba(192, 167,	98, 0.2)', //SI
+          "rgba(100,178,71,0.2)", //MN
+          "rgba(192,120,98, 0.2)", //BX
+          "rgba(98,	123, 193, 0.2)", //BK
+          "rgba(192, 98, 170, 0.2)", //QN
+          "rgba(192, 167,	98, 0.2)", //SI
         ],
         borderColor: [
-          'rgba(100,178,71, 1)',
-          'rgba(192,120,98, 1)',
-          'rgba(98,	123, 193, 1)',
-          'rgba(192, 98, 170, 1)',
-          'rgba(192, 167,	98, 1)',
+          "rgba(100,178,71, 1)",
+          "rgba(192,120,98, 1)",
+          "rgba(98,	123, 193, 1)",
+          "rgba(192, 98, 170, 1)",
+          "rgba(192, 167,	98, 1)",
         ],
         borderWidth: 1,
       },
@@ -254,7 +254,7 @@ const BarChart = (props) => {
     <div>
       <Bar
         data={data}
-        height={400}
+        height={300}
         width={600}
         options={{
           maintainAspectRatio: false,

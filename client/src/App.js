@@ -50,17 +50,11 @@ class App extends Component {
                 handleBoroughChange={this.handleBoroughChange.bind(this)}
                 selectedBorough={this.state.selectedBorough}
               />
-            </div>
-          </div>
-
-          <div className='barchart row'>
-            <div className='col-6'>
               <BarChart
                 // handleBoroughChange={this.handleBoroughChange.bind(this)}
                 selectedBorough={this.state.selectedBorough}
               />
             </div>
-            <div className='col-6'>pie chart</div>
           </div>
         </div>
       </Container>
