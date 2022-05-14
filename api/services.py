@@ -57,9 +57,9 @@ class GeoService:
             case (None, None):
                 pass
             case (id, None):
-                query = subquery.filter(NTA2020.id.like(id))
+                subquery = subquery.filter(NTA2020.id.like(id))
             case (None, boro_id):
-                query = subquery.filter(NTA2020.boro_id == boro_id)
+                subquery = subquery.filter(NTA2020.boro_id == boro_id)
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
         subquery = subquery.group_by(NTA2020) \
@@ -77,13 +77,13 @@ class GeoService:
                 pass
             case (h3_index, k, None) if k is None or k >= 0:
                 if k:
-                    query = subquery.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                    subquery = subquery.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
                 else:
-                    query = subquery.filter(H3.h3_index == h3_index)
+                    subquery = subquery.filter(H3.h3_index == h3_index)
             case (None, None, nta2020_id):
-                query = subquery.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
+                subquery = subquery.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
         if only_water is not None:
-            query = subquery.filter(H3.only_water == only_water)
+            subquery = subquery.filter(H3.only_water == only_water)
         subquery = subquery.group_by(H3) \
                            .subquery()
         return GeoService.query_geojson_agg(subquery) \
