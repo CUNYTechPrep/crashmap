@@ -13,7 +13,7 @@ from sqlalchemy.types import JSON
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
 
-from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
+from models import Boro, Collision, db, H3, h3_nta2020, NTA2020, Person, Vehicle
 
 
 class GeoService:
@@ -49,20 +49,25 @@ class GeoService:
 
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> dict:
-        query = NTA2020.query
+        subquery = db.session.query(NTA2020, func.array_agg(H3.h3_index).label('h3s')) \
+                             .select_from(join(join(NTA2020, h3_nta2020), H3))
         match (id, boro_id):
             case (None, None):
                 pass
             case (id, None):
-                query = query.filter(NTA2020.id.like(id))
+                query = subquery.filter(NTA2020.id.like(id))
             case (None, boro_id):
-                query = query.filter(NTA2020.boro_id == boro_id)
+                query = subquery.filter(NTA2020.boro_id == boro_id)
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(NTA2020).cast(JSON)).label('feature'))]}
+        subquery = subquery.group_by(NTA2020) \
+                           .subquery()
+        return db.session.query(func.json_build_object('type',
+                                                       'FeatureCollection',
+                                                       'features',
+                                                       func.json_agg(geo_func.ST_AsGeoJSON(subquery).cast(JSON))
+                                                           .label('feature'))) \
+                         .scalar()
 
     @staticmethod
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
