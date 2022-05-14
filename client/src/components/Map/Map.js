@@ -269,6 +269,131 @@ class Map extends Component {
                 });
               }
             });
+
+          // map event listeners
+          const boroughNames = [
+            "bronx",
+            "brooklyn",
+            "manhattan",
+            "queens",
+            "statenIsland",
+          ];
+          // add hover event listeners for each borough
+          for (const name of boroughNames) {
+            this.map.on("mousemove", `${name}-fill`, (e) => {
+              this.map.getCanvas().style.cursor = "pointer";
+              if (e.features.length > 0) {
+                if (this.state.hoveredStateId !== null) {
+                  this.map.setFeatureState(
+                    { source: name, id: this.state.hoveredStateId },
+                    { hover: false }
+                  );
+                }
+                // console.log("inside mousemove " + name);
+                this.setState({ hoveredStateId: e.features[0].id });
+                this.map.setFeatureState(
+                  { source: name, id: this.state.hoveredStateId },
+                  { hover: true }
+                );
+              }
+            });
+            this.map.on("mouseleave", `${name}-fill`, () => {
+              // console.log("inside mouseleave " + name);
+              this.map.getCanvas().style.cursor = "";
+              if (this.state.hoveredStateId !== null) {
+                this.map.setFeatureState(
+                  { source: name, id: this.state.hoveredStateId },
+                  { hover: false }
+                );
+              }
+              this.setState({ hoveredStateId: null });
+            });
+            this.map.on("click", `${name}-fill`, (e) => {
+              const boroughCenters = [
+                { value: 2, label: "bronx", lng: "-73.865433", lat: "40.8448" },
+                {
+                  value: 3,
+                  label: "brooklyn",
+                  lng: "-73.9442",
+                  lat: "40.6782",
+                },
+                { value: 4, label: "queens", lng: "-73.7949", lat: "40.7282" },
+                {
+                  value: 1,
+                  label: "manhattan",
+                  lng: "-73.9712",
+                  lat: "40.7831",
+                },
+                {
+                  value: 5,
+                  label: "statenIsland",
+                  lng: "-74.1502",
+                  lat: "40.5795",
+                },
+              ];
+              for (const center of boroughCenters) {
+                if (center.label === name)
+                  this.props.handleBoroughChange(center);
+              }
+            });
+
+            // add a mousemove and mouseleave event listeners for every neighborhood (for hover effect)
+            const popup = new mapboxgl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+            });
+            // hover for borough's neighborhoods
+            this.map.on("mousemove", `${name}-neighborhoods-fill`, (e) => {
+              this.map.getCanvas().style.cursor = "pointer";
+              // if (e.features.length > 0) {
+              //   if (this.state.neighborhoodHoveredStateId !== null) {
+              //     this.map.setFeatureState(
+              //       {
+              //         source: `${name}-neighborhoods`,
+              //         id: this.state.neighborhoodHoveredStateId,
+              //       },
+              //       { hover: false }
+              //     );
+              //   }
+              //   this.setState({ neighborhoodHoveredStateId: e.features[0].id });
+              //   this.map.setFeatureState(
+              //     {
+              //       source: `${name}-neighborhoods`,
+              //       id: this.state.neighborhoodHoveredStateId,
+              //     },
+              //     { hover: true }
+              //   );
+              // }
+
+              const ntaName = e.features[0].properties.name;
+              const coordLen =
+                e.features[0].properties.representative_point.length;
+              const lngLat = e.features[0].properties.representative_point
+                .slice(1, coordLen - 1)
+                .split(",");
+              const coordinates = new mapboxgl.LngLat(lngLat[0], lngLat[1]);
+              const collisionCount = e.features[0].properties.collisionCount;
+
+              const description = `<strong>${ntaName}</strong><p>Collision: ${collisionCount}</p>`;
+
+              popup.setLngLat(coordinates).setHTML(description).addTo(this.map);
+            });
+            this.map.on("mouseleave", `${name}-neighborhoods-fill`, () => {
+              // console.log(`outside ${name}'s neighborhoods`);
+              this.map.getCanvas().style.cursor = "";
+              // if (this.state.neighborhoodHoveredStateId !== null) {
+              //   this.map.setFeatureState(
+              //     {
+              //       source: `${name}-neighborhoods`,
+              //       id: this.state.neighborhoodHoveredStateId,
+              //     },
+              //     { hover: false }
+              //   );
+              // }
+              this.setState({ neighborhoodHoveredStateId: null });
+              popup.remove();
+            });
+          }
         });
 
       // h3 hexagon /api/h3.geojson
@@ -289,118 +414,6 @@ class Map extends Component {
       //         source: "h3",
       //       });
       //   });
-
-      const boroughNames = [
-        "bronx",
-        "brooklyn",
-        "manhattan",
-        "queens",
-        "statenIsland",
-      ];
-      // add hover event listeners for each borough
-      for (const name of boroughNames) {
-        this.map.on("mousemove", `${name}-fill`, (e) => {
-          this.map.getCanvas().style.cursor = "pointer";
-          if (e.features.length > 0) {
-            if (this.state.hoveredStateId !== null) {
-              this.map.setFeatureState(
-                { source: name, id: this.state.hoveredStateId },
-                { hover: false }
-              );
-            }
-            // console.log("inside mousemove " + name);
-            this.setState({ hoveredStateId: e.features[0].id });
-            this.map.setFeatureState(
-              { source: name, id: this.state.hoveredStateId },
-              { hover: true }
-            );
-          }
-        });
-        this.map.on("mouseleave", `${name}-fill`, () => {
-          // console.log("inside mouseleave " + name);
-          this.map.getCanvas().style.cursor = "";
-          if (this.state.hoveredStateId !== null) {
-            this.map.setFeatureState(
-              { source: name, id: this.state.hoveredStateId },
-              { hover: false }
-            );
-          }
-          this.setState({ hoveredStateId: null });
-        });
-        this.map.on("click", `${name}-fill`, (e) => {
-          const boroughCenters = [
-            { value: 2, label: "bronx", lng: "-73.865433", lat: "40.8448" },
-            { value: 3, label: "brooklyn", lng: "-73.9442", lat: "40.6782" },
-            { value: 4, label: "queens", lng: "-73.7949", lat: "40.7282" },
-            { value: 1, label: "manhattan", lng: "-73.9712", lat: "40.7831" },
-            {
-              value: 5,
-              label: "statenIsland",
-              lng: "-74.1502",
-              lat: "40.5795",
-            },
-          ];
-          for (const center of boroughCenters) {
-            if (center.label === name) this.props.handleBoroughChange(center);
-          }
-        });
-
-        // add a mousemove and mouseleave event listeners for every neighborhood (for hover effect)
-        const popup = new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-        });
-        // hover for borough's neighborhoods
-        this.map.on("mousemove", `${name}-neighborhoods-fill`, (e) => {
-          this.map.getCanvas().style.cursor = "pointer";
-          // if (e.features.length > 0) {
-          //   if (this.state.neighborhoodHoveredStateId !== null) {
-          //     this.map.setFeatureState(
-          //       {
-          //         source: `${name}-neighborhoods`,
-          //         id: this.state.neighborhoodHoveredStateId,
-          //       },
-          //       { hover: false }
-          //     );
-          //   }
-          //   this.setState({ neighborhoodHoveredStateId: e.features[0].id });
-          //   this.map.setFeatureState(
-          //     {
-          //       source: `${name}-neighborhoods`,
-          //       id: this.state.neighborhoodHoveredStateId,
-          //     },
-          //     { hover: true }
-          //   );
-          // }
-
-          const ntaName = e.features[0].properties.name;
-          const coordLen = e.features[0].properties.representative_point.length;
-          const lngLat = e.features[0].properties.representative_point
-            .slice(1, coordLen - 1)
-            .split(",");
-          const coordinates = new mapboxgl.LngLat(lngLat[0], lngLat[1]);
-          const collisionCount = e.features[0].properties.collisionCount;
-
-          const description = `<strong>${ntaName}</strong><p>Collision: ${collisionCount}</p>`;
-
-          popup.setLngLat(coordinates).setHTML(description).addTo(this.map);
-        });
-        this.map.on("mouseleave", `${name}-neighborhoods-fill`, () => {
-          // console.log(`outside ${name}'s neighborhoods`);
-          this.map.getCanvas().style.cursor = "";
-          // if (this.state.neighborhoodHoveredStateId !== null) {
-          //   this.map.setFeatureState(
-          //     {
-          //       source: `${name}-neighborhoods`,
-          //       id: this.state.neighborhoodHoveredStateId,
-          //     },
-          //     { hover: false }
-          //   );
-          // }
-          this.setState({ neighborhoodHoveredStateId: null });
-          popup.remove();
-        });
-      }
     });
 
     this.map.once("load", () => {
