@@ -52,7 +52,7 @@ class NTA2020(db.Model):
     centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
     bounds = db.Column(db.ARRAY(db.REAL(), as_tuple=True, dimensions=2))
     geometry = ga2.Column(ga2.Geometry())
-    h3s = db.relationship('H3', secondary=h3_nta2020, backref='h3_nta2020')
+    h3s = db.relationship('H3', secondary=h3_nta2020, backref='h3_nta2020', viewonly=True)
 
 
 @dataclass
@@ -67,7 +67,7 @@ class H3(db.Model):
     only_water = db.Column(db.BOOLEAN(), nullable=False)
     centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
     geometry = ga2.Column(ga2.Geometry('POLYGON'), nullable=False)
-    nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref='h3_nta2020')
+    nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref='h3_nta2020', viewonly=True)
 
 
 @dataclass
@@ -153,7 +153,7 @@ class Vehicle(db.Model):
     public_property_damage = db.Column(db.VARCHAR())
     public_property_damage_type = db.Column(db.VARCHAR())
     contributing_factors = db.Column(db.ARRAY(db.VARCHAR()))
-    people = db.relationship('Person', backref='vehicle', lazy=True)
+    people = db.relationship('Person', backref='vehicle', lazy='joined', viewonly=True)
 
 
 @dataclass
@@ -177,5 +177,5 @@ class Collision(db.Model):
     h3_index = db.Column(db.BIGINT(), db.ForeignKey('h3.h3_index'))
     nta2020_id = db.Column(db.VARCHAR(6), db.ForeignKey('nta2020.id'))
     vehicles = db.relationship('Vehicle', backref='collision', lazy=True)
-    people = db.relationship('Person', backref='collision',
-                             primaryjoin='and_(Collision.id==Person.collision_id,Person.vehicle_id==None)', lazy=True)
+    people = db.relationship('Person', backref='collision', lazy='joined', viewonly=True,
+                             primaryjoin='and_(Collision.id==Person.collision_id,Person.vehicle_id==None)')
