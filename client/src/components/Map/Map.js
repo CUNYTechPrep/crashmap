@@ -14,7 +14,11 @@ class Map extends Component {
       lat: 40.70363951429806,
       zoom: 9.5,
       hoveredStateId: null,
-      neighborhoodHoveredStateId: null,
+      fetchedH3MN: false,
+      fetchedH3BX: false,
+      fetchedH3BK: false,
+      fetchedH3QN: false,
+      fetchedH3SI: false,
     };
     this.mapContainer = React.createRef();
   }
@@ -40,40 +44,48 @@ class Map extends Component {
         .then((data) => {
           // console.log("all neighborhoods below");
           const manhattan_nta = {
-            features: data.features.filter(
-              (nta) =>
-                nta.properties.boro_id === 1 && nta.properties.name != null
-            ),
+            features: [],
             type: "FeatureCollection",
           };
           const bronx_nta = {
-            features: data.features.filter(
-              (nta) =>
-                nta.properties.boro_id === 2 && nta.properties.name != null
-            ),
+            features: [],
             type: "FeatureCollection",
           };
           const brooklyn_nta = {
-            features: data.features.filter(
-              (nta) =>
-                nta.properties.boro_id === 3 && nta.properties.name != null
-            ),
+            features: [],
             type: "FeatureCollection",
           };
           const queens_nta = {
-            features: data.features.filter(
-              (nta) =>
-                nta.properties.boro_id === 4 && nta.properties.name != null
-            ),
+            features: [],
             type: "FeatureCollection",
           };
           const statenIsland_nta = {
-            features: data.features.filter(
-              (nta) =>
-                nta.properties.boro_id === 5 && nta.properties.name != null
-            ),
+            features: [],
             type: "FeatureCollection",
           };
+
+          // iterate over all neighborhoods from all 5 boroughs to separate them
+          for (const nta of data.features) {
+            if (nta.properties.name == null) continue;
+            const boro_id = nta.properties.boro_id;
+            switch (boro_id) {
+              case 1:
+                manhattan_nta.features.push(nta);
+                break;
+              case 2:
+                bronx_nta.features.push(nta);
+                break;
+              case 3:
+                brooklyn_nta.features.push(nta);
+                break;
+              case 4:
+                queens_nta.features.push(nta);
+                break;
+              case 5:
+                statenIsland_nta.features.push(nta);
+                break;
+            }
+          }
 
           function countCollisions(data, nta) {
             const collisions = data.filter(
@@ -341,29 +353,11 @@ class Map extends Component {
             const popup = new mapboxgl.Popup({
               closeButton: false,
               closeOnClick: false,
+              className: "popup",
             });
             // hover for borough's neighborhoods
             this.map.on("mousemove", `${name}-neighborhoods-fill`, (e) => {
               this.map.getCanvas().style.cursor = "pointer";
-              // if (e.features.length > 0) {
-              //   if (this.state.neighborhoodHoveredStateId !== null) {
-              //     this.map.setFeatureState(
-              //       {
-              //         source: `${name}-neighborhoods`,
-              //         id: this.state.neighborhoodHoveredStateId,
-              //       },
-              //       { hover: false }
-              //     );
-              //   }
-              //   this.setState({ neighborhoodHoveredStateId: e.features[0].id });
-              //   this.map.setFeatureState(
-              //     {
-              //       source: `${name}-neighborhoods`,
-              //       id: this.state.neighborhoodHoveredStateId,
-              //     },
-              //     { hover: true }
-              //   );
-              // }
 
               const ntaName = e.features[0].properties.name;
               const coordLen =
@@ -381,17 +375,25 @@ class Map extends Component {
             this.map.on("mouseleave", `${name}-neighborhoods-fill`, () => {
               // console.log(`outside ${name}'s neighborhoods`);
               this.map.getCanvas().style.cursor = "";
-              // if (this.state.neighborhoodHoveredStateId !== null) {
-              //   this.map.setFeatureState(
-              //     {
-              //       source: `${name}-neighborhoods`,
-              //       id: this.state.neighborhoodHoveredStateId,
-              //     },
-              //     { hover: false }
-              //   );
-              // }
               this.setState({ neighborhoodHoveredStateId: null });
               popup.remove();
+            });
+            this.map.on("click", `${name}-neighborhoods-fill`, (e) => {
+              const nta_id = e.features[0].properties.id;
+              const nta_source = this.map.getSource(nta_id);
+              if (nta_source) {
+                if (this.map.getLayer("h3-viz")) this.map.removeLayer("h3-viz");
+                this.map.addLayer({
+                  id: "h3-viz",
+                  type: "line",
+                  source: nta_id,
+                });
+
+                // TODO: get centroid for current nta for zooming in to view hexagons
+                // console.dir(nta_source._data);
+                // this.map.setCenter([lng, lat]);
+                // this.map.setZoom(10.5);
+              }
             });
           }
         });
@@ -525,6 +527,28 @@ class Map extends Component {
       // console.dir(this.props.selectedBorough); prints object
       this.resetMapLayers();
 
+      function fetchAndPopulateNTAWithH3(ntas, map) {
+        // console.dir(ntas.)
+        for (const nta of ntas.features) {
+          const nta_id = nta.properties.id;
+          // TODO: optimize by making just 1 request and parsing it instead of making
+          //    multiple API request
+          fetch(
+            `${process.env.REACT_APP_API_PROXY_URL_PREFIX}h3.geojson?nta2020_id=${nta_id}&only_water=false`
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              // console.dir(data);
+              if (!map.getSource(`${nta_id}`)) {
+                map.addSource(`${nta_id}`, {
+                  type: "geojson",
+                  data: data,
+                });
+              }
+            });
+        }
+      }
+
       const lng = this.props.selectedBorough.lng;
       const lat = this.props.selectedBorough.lat;
       // eslint-disable-next-line default-case
@@ -555,6 +579,11 @@ class Map extends Component {
               ],
             },
           });
+          if (!this.state.fetchedH3BX) {
+            const nta_source = this.map.getSource("bronx-neighborhoods");
+            fetchAndPopulateNTAWithH3(nta_source._data, this.map);
+            this.setState({ fetchedH3BX: true });
+          }
           break;
         case "brooklyn":
           this.map.addLayer({
@@ -582,7 +611,12 @@ class Map extends Component {
               ],
             },
           });
-          console.log("Added neighborhoods layer");
+          if (!this.state.fetchedH3BK) {
+            const nta_source = this.map.getSource("brooklyn-neighborhoods");
+            console.dir(nta_source._data);
+            fetchAndPopulateNTAWithH3(nta_source._data, this.map);
+            this.setState({ fetchedH3BK: true });
+          }
           break;
         case "manhattan":
           this.map.addLayer({
@@ -610,6 +644,11 @@ class Map extends Component {
               ],
             },
           });
+          if (!this.state.fetchedH3MN) {
+            const nta_source = this.map.getSource("manhattan-neighborhoods");
+            fetchAndPopulateNTAWithH3(nta_source._data, this.map);
+            this.setState({ fetchedH3MN: true });
+          }
           break;
         case "queens":
           this.map.addLayer({
@@ -637,6 +676,11 @@ class Map extends Component {
               ],
             },
           });
+          if (!this.state.fetchedH3QN) {
+            const nta_source = this.map.getSource("queens-neighborhoods");
+            fetchAndPopulateNTAWithH3(nta_source._data, this.map);
+            this.setState({ fetchedH3QN: true });
+          }
           break;
         case "statenIsland":
           this.map.addLayer({
@@ -664,10 +708,15 @@ class Map extends Component {
               ],
             },
           });
+          if (!this.state.fetchedH3SI) {
+            const nta_source = this.map.getSource("statenIsland-neighborhoods");
+            fetchAndPopulateNTAWithH3(nta_source._data, this.map);
+            this.setState({ fetchedH3SI: true });
+          }
           break;
       }
       this.map.setCenter([lng, lat]);
-      this.map.setZoom(10.5);
+      this.map.setZoom(11.3);
     }
   }
 

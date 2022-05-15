@@ -1,3 +1,7 @@
 .map-container {
   height: 100%;
 }
+
+.popup {
+  opacity: 0.6;
+}
