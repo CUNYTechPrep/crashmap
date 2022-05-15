@@ -172,7 +172,7 @@ class Filter extends Component {
           </div>
         </div>
         <div>
-          <h2>Ranking of most Collisions</h2>
+          <h5>Borough with Highest Collisions</h5>
           {this.state.boroughSummary.map((rank, i) => (
             <Rank
               counter={++i}
