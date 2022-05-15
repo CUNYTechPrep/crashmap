@@ -8,9 +8,8 @@ from typing import Optional
 db = SQLAlchemy()
 
 h3_nta2020 = db.Table('h3_nta2020',
-                      db.Column('h3_index', db.BIGINT(), db.ForeignKey('h3.h3_index'), nullable=False),
-                      db.Column('nta2020_id', db.VARCHAR(6), db.ForeignKey('nta2020.id'), nullable=False),
-                      db.PrimaryKeyConstraint('h3_index', 'nta2020_id'))
+                      db.Column('h3_index', db.BIGINT(), db.ForeignKey('h3.h3_index')),
+                      db.Column('nta2020_id', db.VARCHAR(6), db.ForeignKey('nta2020.id')))
 
 
 @dataclass
@@ -52,7 +51,7 @@ class NTA2020(db.Model):
     centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
     bounds = db.Column(db.ARRAY(db.REAL(), as_tuple=True, dimensions=2))
     geometry = ga2.Column(ga2.Geometry())
-    h3s = db.relationship('H3', secondary=h3_nta2020, backref='h3_nta2020')
+    h3s = db.relationship('H3', secondary=h3_nta2020, backref=db.backref('h3'), viewonly=True)
 
 
 @dataclass
@@ -67,7 +66,7 @@ class H3(db.Model):
     only_water = db.Column(db.BOOLEAN(), nullable=False)
     centroid = db.Column(db.ARRAY(db.REAL(), as_tuple=True))
     geometry = ga2.Column(ga2.Geometry('POLYGON'), nullable=False)
-    nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref='h3_nta2020')
+    nta2020s = db.relationship('NTA2020', secondary=h3_nta2020, backref=db.backref('nta2020'), viewonly=True)
 
 
 @dataclass
