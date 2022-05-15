@@ -2,13 +2,14 @@ from dataclasses import asdict, is_dataclass
 from datetime import date, time
 from flask.json import JSONEncoder
 from flask_sqlalchemy import BaseQuery
-from functools import partial, reduce
+from functools import lru_cache, partial, reduce
 from geoalchemy2 import WKBElement
 from geoalchemy2 import func as geo_func
 from geoalchemy2.shape import to_shape
 from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
+from os.path import join as join_path
 from sqlalchemy import and_, func, join, or_, select
 from sqlalchemy.sql import Selectable
 from sqlalchemy.types import JSON
@@ -18,26 +19,18 @@ from typing import Any, Iterable, Optional, Sequence
 from models import Boro, Collision, db, H3, h3_nta2020, NTA2020, Person, Vehicle
 
 
+class ResourceService:
+    @staticmethod
+    @lru_cache
+    def get_text_resource(name: str) -> str:
+        with open(join_path('resources', name)) as file:
+            return file.read()
+
+
 class GeoService:
     @staticmethod
     def get_all() -> dict:
-        sql_statement = '''SELECT json_build_object('type', 'FeatureCollection',
-                                                    'features', json_agg(st_asgeojson(b)::json)) AS geojson
-                           FROM (SELECT boro.*,
-                                        json_build_object('type', 'FeatureCollection',
-                                                          'features', json_agg(st_asgeojson(n)::json)) AS nta2020s
-                                 FROM (SELECT nta2020.*,
-                                              json_build_object('type', 'FeatureCollection',
-                                                                'features', json_agg(h.geojson)) AS h3s
-                                       FROM (SELECT h3_nta2020.nta2020_id,
-                                                    st_asgeojson(h3)::json AS geojson
-                                             FROM h3
-                                             JOIN h3_nta2020 ON h3.h3_index = h3_nta2020.h3_index) AS h
-                                       JOIN nta2020 ON nta2020.id = h.nta2020_id
-                                       GROUP BY nta2020.id) AS n
-                                 JOIN boro ON n.boro_id = boro.id
-                                 GROUP BY boro.id) AS b;'''
-        return db.session.execute(sql_statement).scalar()
+        return db.session.execute(ResourceService.get_text_resource('dump_geo_data.sql')).scalar()
 
     @staticmethod
     def get_boro(id: Optional[int]) -> dict:
