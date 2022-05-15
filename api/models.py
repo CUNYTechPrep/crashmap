@@ -88,7 +88,7 @@ class Person(db.Model):
     action: Optional[str]
     complaint: Optional[str]
     role: Optional[str]
-    contributing_factors: list[str]
+    contributing_factors: tuple[str]
     sex: Optional[str]
 
     __tablename__ = 'person'
@@ -108,7 +108,7 @@ class Person(db.Model):
     action = db.Column(db.VARCHAR())
     complaint = db.Column(db.VARCHAR())
     role = db.Column(db.VARCHAR())
-    contributing_factors = db.Column(db.ARRAY(db.VARCHAR()))
+    contributing_factors = db.Column(db.ARRAY(db.VARCHAR(), as_tuple=True))
     sex = db.Column(db.VARCHAR())
 
 
@@ -128,10 +128,10 @@ class Vehicle(db.Model):
     driver_license_jurisdiction: Optional[str]
     pre_crash: Optional[str]
     point_of_impact: Optional[str]
-    damages: list[str]
+    damages: tuple[str]
     public_property_damage: Optional[str]
     public_property_damage_type: Optional[str]
-    contributing_factors: list[str]
+    contributing_factors: tuple[str]
     people: list[Person]
 
     __tablename__ = 'vehicle'
@@ -149,10 +149,10 @@ class Vehicle(db.Model):
     driver_license_jurisdiction = db.Column(db.VARCHAR())
     pre_crash = db.Column(db.VARCHAR())
     point_of_impact = db.Column(db.VARCHAR())
-    damages = db.Column(db.ARRAY(db.VARCHAR()))
+    damages = db.Column(db.ARRAY(db.VARCHAR(), as_tuple=True))
     public_property_damage = db.Column(db.VARCHAR())
     public_property_damage_type = db.Column(db.VARCHAR())
-    contributing_factors = db.Column(db.ARRAY(db.VARCHAR()))
+    contributing_factors = db.Column(db.ARRAY(db.VARCHAR(), as_tuple=True))
     people = db.relationship('Person', backref='vehicle', lazy='joined', viewonly=True)
 
 
