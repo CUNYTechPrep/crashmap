@@ -25,7 +25,7 @@ class BarChart extends React.Component {
         return res.json();
       })
       .then((json) => {
-        console.log(json);
+        // console.log(json);
         arr3 = {
           id: '1',
           collision: json[0].collisions,
@@ -41,7 +41,7 @@ class BarChart extends React.Component {
         return res.json();
       })
       .then((json) => {
-        console.log(json);
+        // console.log(json);
         arr3 = {
           id: '2',
           collision: json[0].collisions,
@@ -57,7 +57,7 @@ class BarChart extends React.Component {
         return res.json();
       })
       .then((json) => {
-        console.log(json);
+        // console.log(json);
         arr3 = {
           id: '3',
           collision: json[0].collisions,
@@ -73,7 +73,7 @@ class BarChart extends React.Component {
         return res.json();
       })
       .then((json) => {
-        console.log(json);
+        // console.log(json);
         arr3 = {
           id: '4',
           collision: json[0].collisions,
@@ -89,7 +89,7 @@ class BarChart extends React.Component {
         return res.json();
       })
       .then((json) => {
-        console.log(json);
+        // console.log(json);
         arr3 = {
           id: '5',
           collision: json[0].collisions,

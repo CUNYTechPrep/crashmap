@@ -1,0 +1,12 @@
+.show {
+  display: null;
+}
+.hide {
+  display: none;
+}
+.title {
+  margin-top: 5px;
+  text-align: center;
+  font-weight: 500;
+  /* line-height: 1.2; */
+}

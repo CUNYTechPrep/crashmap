@@ -3,7 +3,7 @@ import Map from './components/Map/Map.js';
 import Filter from './components/Filter/Filter.js';
 import Overview from './components/Filter/Overview.js';
 import { Container } from 'react-bootstrap';
-// import LineChart from './components/LineChart.js';
+import BoroChart from './components/Charts/BoroChart.js';
 import BarChart from './components/Charts/BarChart.js';
 
 import './App.css';
@@ -53,6 +53,11 @@ class App extends Component {
               <BarChart
                 handleBoroughChange={this.handleBoroughChange.bind(this)}
                 selectedBorough={this.state.selectedBorough}
+              />
+              <BoroChart
+                handleBoroughChange={this.handleBoroughChange.bind(this)}
+                selectedBorough={this.state.selectedBorough}
+                // currBorough={[]}
               />
             </div>
           </div>
