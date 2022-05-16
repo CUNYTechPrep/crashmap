@@ -203,9 +203,9 @@ class BoroChart extends React.Component {
   render() {
     return (
       <div className={`${this.state.visibility}`}>
-        <h3 className='title'>
+        <h5 className='title'>
           {this.state.curr?.name}: {this.state.curr?.collisions}
-        </h3>
+        </h5>
         <Doughnut
           data={{
             // x-axis label values
