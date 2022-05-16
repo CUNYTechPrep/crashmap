@@ -1,6 +1,7 @@
 from dataclasses import asdict, is_dataclass
 from datetime import date, time
 from flask.json import JSONEncoder
+from flask_sqlalchemy import BaseQuery
 from functools import partial, reduce
 from geoalchemy2 import WKBElement
 from geoalchemy2 import func as geo_func
@@ -9,100 +10,93 @@ from h3 import h3_to_string, k_ring, string_to_h3
 from itertools import chain
 from operator import is_not
 from sqlalchemy import and_, func, join, or_, select
+from sqlalchemy.sql import Selectable
 from sqlalchemy.types import JSON
 import sqlalchemy.dialects.postgresql as postgresql
 from typing import Any, Iterable, Optional, Sequence
 
-from models import Boro, Collision, db, H3, NTA2020, Person, Vehicle
+from models import Boro, Collision, db, H3, h3_nta2020, NTA2020, Person, Vehicle
 
 
 class GeoService:
     @staticmethod
     def get_all() -> dict:
-        sql_statement = '''SELECT 'Feature' AS type,
-                                  json_build_object(
-                                      'id', b.id,
-                                      'name', b.name,
-                                      'nta2020s', json_build_object(
-                                          'type', 'FeatureCollection',
-                                          'features', (
-                                              SELECT array_agg(
-                                                  json_build_object(
-                                                      'type', 'Feature',
-                                                      'properties', json_build_object(
-                                                          'id', n.id,
-                                                          'name', n.name,
-                                                          'h3s', json_build_object(
-                                                              'type', 'FeatureCollection',
-                                                              'features', (
-                                                                  SELECT array_agg(
-                                                                      json_build_object(
-                                                                         'type', 'Feature',
-                                                                         'properties', json_build_object(
-                                                                             'h3_index', h.h3_index,
-                                                                             'only_water', h.only_water),
-                                                                         'geometry', json(h.geometry)))
-                                                                  FROM h3_nta2020 hn
-                                                                  JOIN h3 h ON hn.h3_index = h.h3_index
-                                                                  WHERE hn.nta2020_id = n.id))),
-                                                      'geometry', json(n.geometry)))
-                                              FROM nta2020 n
-                                              WHERE n.boro_id = b.id)),
-                                      'land_geometry', json_build_object(
-                                          'type', 'Feature',
-                                          'geometry', json(b.land_geometry))) AS properties,
-                                  json(b.geometry) AS geometry
-                           FROM boro b'''
-        return {'type': 'FeatureCollection',
-                'features': [*map(dict, db.session.execute(sql_statement))]}
+        sql_statement = '''SELECT json_build_object('type', 'FeatureCollection',
+                                                    'features', json_agg(st_asgeojson(b)::json)) AS geojson
+                           FROM (SELECT boro.*,
+                                        json_build_object('type', 'FeatureCollection',
+                                                          'features', json_agg(st_asgeojson(n)::json)) AS nta2020s
+                                 FROM (SELECT nta2020.*,
+                                              json_build_object('type', 'FeatureCollection',
+                                                                'features', json_agg(h.geojson)) AS h3s
+                                       FROM (SELECT h3_nta2020.nta2020_id,
+                                                    st_asgeojson(h3)::json AS geojson
+                                             FROM h3
+                                             JOIN h3_nta2020 ON h3.h3_index = h3_nta2020.h3_index) AS h
+                                       JOIN nta2020 ON nta2020.id = h.nta2020_id
+                                       GROUP BY nta2020.id) AS n
+                                 JOIN boro ON n.boro_id = boro.id
+                                 GROUP BY boro.id) AS b;'''
+        return db.session.execute(sql_statement).scalar()
 
     @staticmethod
     def get_boro(id: Optional[int]) -> dict:
-        query = Boro.query
+        subquery = db.session.query(Boro, func.array_agg(NTA2020.id).label('nta2020s')) \
+                             .select_from(join(Boro, NTA2020))
         if id is not None:
-            query = query.where(Boro.id == id)
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(Boro).cast(JSON)).label('feature'))]}
+            subquery = subquery.filter(Boro.id == id)
+        subquery = subquery.group_by(Boro) \
+                           .subquery()
+        return GeoService.query_geojson_agg(subquery) \
+                         .scalar()
 
     @staticmethod
     def get_nta2020(id: Optional[str], boro_id: Optional[int]) -> dict:
-        query = NTA2020.query
+        subquery = db.session.query(NTA2020, func.array_agg(H3.h3_index).label('h3s')) \
+                             .select_from(join(join(NTA2020, h3_nta2020), H3))
         match (id, boro_id):
             case (None, None):
                 pass
             case (id, None):
-                query = query.filter(NTA2020.id.like(id))
+                subquery = subquery.filter(NTA2020.id.like(id))
             case (None, boro_id):
-                query = query.filter(NTA2020.boro_id == boro_id)
+                subquery = subquery.filter(NTA2020.boro_id == boro_id)
             case _:
                 raise ValueError('Invalid combination of arguments provided.')
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(NTA2020).cast(JSON)).label('feature'))]}
+        subquery = subquery.group_by(NTA2020) \
+                           .subquery()
+        return GeoService.query_geojson_agg(subquery) \
+                         .scalar()
 
     @staticmethod
     def get_h3(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], only_water: Optional[bool]) \
             -> dict:
-        query = H3.query
+        subquery = db.session.query(H3, func.array_agg(NTA2020.id).label('nta2020s')) \
+                             .select_from(join(join(H3, h3_nta2020), NTA2020))
         match (h3_index, k, nta2020_id):
             case (None, None, None):
                 pass
             case (h3_index, k, None) if k is None or k >= 0:
                 if k:
-                    query = query.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
+                    subquery = subquery.filter(H3.h3_index.in_(map(string_to_h3, k_ring(h3_to_string(h3_index), k))))
                 else:
-                    query = query.filter(H3.h3_index == h3_index)
+                    subquery = subquery.filter(H3.h3_index == h3_index)
             case (None, None, nta2020_id):
-                query = query.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
+                subquery = subquery.filter(H3.nta2020s.any(NTA2020.id.like(nta2020_id)))
         if only_water is not None:
-            query = query.filter(H3.only_water == only_water)
-        return {'type': 'FeatureCollection',
-                'features': [dict(value)
-                             for value
-                             in query.value(func.json_agg(geo_func.ST_AsGeoJSON(H3).cast(JSON)).label('feature'))]}
+            subquery = subquery.filter(H3.only_water == only_water)
+        subquery = subquery.group_by(H3) \
+                           .subquery()
+        return GeoService.query_geojson_agg(subquery) \
+                         .scalar()
+
+    @staticmethod
+    def query_geojson_agg(query: Selectable) -> BaseQuery:
+        return db.session.query(func.json_build_object('type',
+                                                       'FeatureCollection',
+                                                       'features',
+                                                       func.json_agg(geo_func.ST_AsGeoJSON(query).cast(JSON))
+                                                           .label('feature')))
 
 
 class CollisionService:
@@ -228,23 +222,27 @@ class SummaryService:
         return [*map(dict, query.values(*columns))]
 
     @staticmethod
-    def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str],
+    def get_h3_summary(h3_index: Optional[int], k: Optional[int], nta2020_id: Optional[str], boro_id: Optional[int],
                        rectangle: Optional[tuple[tuple[float, float], tuple[float, float]]],
                        start_date: Optional[date], end_date: Optional[date],
                        start_time: Optional[time], end_time: Optional[time],
                        include_collision_locations: Optional[bool]) -> list[dict[str, Any]]:
-        match (h3_index, k, nta2020_id, rectangle):
-            case (None, None, None, None):
+        match (h3_index, k, nta2020_id, boro_id, rectangle):
+            case (None, None, None, None, None):
                 arguments = {'predicate': Collision.h3_index.is_not(None)}
-            case (h3_index, k, None, None) if k is None or k >= 0:
+            case (h3_index, k, None, None, None) if k is None or k >= 0:
                 if k:
                     arguments = {'predicate': Collision.h3_index.in_(map(string_to_h3,
                                                                          k_ring(h3_to_string(h3_index), k)))}
                 else:
                     arguments = {'predicate': Collision.h3_index == h3_index}
-            case (None, None, nta2020_id, None):
+            case (None, None, nta2020_id, None, None):
                 arguments = {'predicate': Collision.nta2020_id.like(nta2020_id)}
-            case (None, None, None, rectangle):
+            case (None, None, None, boro_id, None):
+                arguments = {'join_model': NTA2020,
+                             'join_clause': Collision.nta2020_id == NTA2020.id,
+                             'predicate': NTA2020.boro_id == boro_id}
+            case (None, None, None, None, rectangle):
                 arguments = {'join_model': H3,
                              'join_clause': H3.h3_index == Collision.h3_index,
                              'predicate': geo_func.ST_Intersects(geo_func.ST_MakeEnvelope(*chain(*rectangle)),
