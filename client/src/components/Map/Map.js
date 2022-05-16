@@ -101,23 +101,21 @@ class Map extends Component {
             .then((res) => res.json())
             .then((data) => {
               // console.log("all boroughs below");
-              const manhattan = data.features[0];
-              manhattan.geometry = manhattan.properties.land_geometry; // remove waters
-              const bronx = data.features[1];
-              bronx.geometry = bronx.properties.land_geometry; // remove waters
-              const brooklyn = data.features[2];
-              brooklyn.geometry = brooklyn.properties.land_geometry; // remove waters
-              const queens = data.features[3];
-              queens.geometry = queens.properties.land_geometry; // remove waters
-              const statenIsland = data.features[4];
-              statenIsland.geometry = statenIsland.properties.land_geometry; // remove waters
+              const boroughData = data.features.reduce((result, feature) => {
+                const { id, name, land_geometry } = feature.properties;
+                result[name] = {
+                  id: id,
+                  type: "Feature",
+                  geometry: land_geometry
+                };
+                return result;
+              }, {});
 
-              // setting id for mapbox hover state
-              manhattan.id = 1;
-              bronx.id = 2;
-              brooklyn.id = 3;
-              queens.id = 4;
-              statenIsland.id = 5;
+              const manhattan = boroughData["Manhattan"];
+              const bronx = boroughData["Bronx"];
+              const brooklyn = boroughData["Brooklyn"];
+              const queens = boroughData["Queens"];
+              const statenIsland = boroughData["Staten Island"];
 
               // render manhattan borough
               if (!this.map.getSource("manhattan")) {
