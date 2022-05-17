@@ -1,17 +1,17 @@
-import React from 'react';
-import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
-import Chart from 'chart.js/auto';
-import './styles.css';
+import React from "react";
+import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
+import Chart from "chart.js/auto";
+import "./styles.css";
 
 class BoroChart extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      visibility: 'hide',
+      visibility: "hide",
       boroughs: [],
       curr: [
         {
-          id: '',
+          id: "",
           collision: 0,
           cyclists: 0,
           cyclists_injured: 0,
@@ -23,7 +23,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: 0,
           car_occupants_killed: 0,
           collisions: 0,
-          name: '',
+          name: "",
         },
       ],
     };
@@ -44,7 +44,7 @@ class BoroChart extends React.Component {
       .then((json) => {
         // console.log(json);
         arr3 = {
-          id: '1',
+          id: "1",
           collision: json[0].collisions,
           cyclists: json[0].cyclists,
           cyclists_injured: json[0].cyclists_injured,
@@ -56,7 +56,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: json[0].occupants_injured,
           car_occupants_killed: json[0].occupants_killed,
           collisions: json[0].collisions,
-          name: 'Manhattan',
+          name: "Manhattan",
         };
         // this.setState({ mn: arr3 });
         arr2.push(arr3);
@@ -71,7 +71,7 @@ class BoroChart extends React.Component {
       .then((json) => {
         // console.log(json);
         arr3 = {
-          id: '2',
+          id: "2",
           collision: json[0].collisions,
           cyclists: json[0].cyclists,
           cyclists_injured: json[0].cyclists_injured,
@@ -83,7 +83,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: json[0].occupants_injured,
           car_occupants_killed: json[0].occupants_killed,
           collisions: json[0].collisions,
-          name: 'Bronx',
+          name: "Bronx",
         };
         // this.setState({ bx: arr3 });
         arr2.push(arr3);
@@ -98,7 +98,7 @@ class BoroChart extends React.Component {
       .then((json) => {
         // console.log(json);
         arr3 = {
-          id: '3',
+          id: "3",
           collision: json[0].collisions,
           cyclists: json[0].cyclists,
           cyclists_injured: json[0].cyclists_injured,
@@ -110,7 +110,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: json[0].occupants_injured,
           car_occupants_killed: json[0].occupants_killed,
           collisions: json[0].collisions,
-          name: 'Brooklyn',
+          name: "Brooklyn",
         };
         // this.setState({ bk: arr3 });
         arr2.push(arr3);
@@ -125,7 +125,7 @@ class BoroChart extends React.Component {
       .then((json) => {
         // console.log(json);
         arr3 = {
-          id: '4',
+          id: "4",
           collision: json[0].collisions,
           cyclists: json[0].cyclists,
           cyclists_injured: json[0].cyclists_injured,
@@ -137,7 +137,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: json[0].occupants_injured,
           car_occupants_killed: json[0].occupants_killed,
           collisions: json[0].collisions,
-          name: 'Queens',
+          name: "Queens",
         };
         // this.setState({ qn: arr3 });
         arr2.push(arr3);
@@ -152,7 +152,7 @@ class BoroChart extends React.Component {
       .then((json) => {
         // console.log(json);
         arr3 = {
-          id: '5',
+          id: "5",
           collision: json[0].collisions,
           cyclists: json[0].cyclists,
           cyclists_injured: json[0].cyclists_injured,
@@ -164,7 +164,7 @@ class BoroChart extends React.Component {
           car_occupants_injured: json[0].occupants_injured,
           car_occupants_killed: json[0].occupants_killed,
           collisions: json[0].collisions,
-          name: 'Staten Island',
+          name: "Staten Island",
         };
         // this.setState({ si: arr3 });
         // console.log(this.state.mn);
@@ -179,19 +179,19 @@ class BoroChart extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.selectedBorough !== null) {
-      if (this.state.visibility === 'hide') {
-        this.setState({ visibility: 'show' });
+      if (this.state.visibility === "hide") {
+        this.setState({ visibility: "show" });
       }
     }
     if (prevProps.selectedBorough !== this.props.selectedBorough) {
-      console.log('prevProps.selectedBorough', prevProps.selectedBorough);
-      console.log('this.props.selectedBorough', this.props.selectedBorough);
+      console.log("prevProps.selectedBorough", prevProps.selectedBorough);
+      console.log("this.props.selectedBorough", this.props.selectedBorough);
       for (var i = 0; i < 5; i++) {
         if (
           parseInt(this.state.boroughs[i].id) ===
           this.props.selectedBorough.value
         ) {
-          console.log('in for loop', this.state.boroughs[i]);
+          console.log("in for loop", this.state.boroughs[i]);
           this.setState({ curr: this.state.boroughs[i] });
         }
       }
@@ -203,18 +203,19 @@ class BoroChart extends React.Component {
   render() {
     return (
       <div className={`${this.state.visibility}`}>
-        <h5 className='title'>
+        {/* <h5 className='title'>
           {this.state.curr?.name}: {this.state.curr?.collisions}
-        </h5>
+        </h5> */}
         <Doughnut
+          style={{ marginTop: "5px" }}
           data={{
             // x-axis label values
             labels: [
-              'Cyclists Injured',
+              "Cyclists Injured",
               // 'Cyclists Killed',
-              'Pedestrians Injured',
+              "Pedestrians Injured",
               // 'Pedestrians Killed',
-              'Vehicle Occupants Injured',
+              "Vehicle Occupants Injured",
               // 'Vehicle Occupant Killed',
             ],
             datasets: [
@@ -236,11 +237,11 @@ class BoroChart extends React.Component {
                 fill: false,
                 borderWidth: 0.5,
                 backgroundColor: [
-                  'rgba(100,178,71,1)',
+                  "rgba(100,178,71,1)",
                   // 'rgba(132, 169, 117,1)',
-                  'rgba(106, 90, 205,1)',
+                  "rgba(106, 90, 205,1)",
                   // 'rgba(230,120,98, 1)',
-                  'rgba(238, 130, 238,1)',
+                  "rgba(238, 130, 238,1)",
                   // 'rgba(218, 130, 238,1)',
                 ],
               },

@@ -106,7 +106,7 @@ class Map extends Component {
                 result[name] = {
                   id: id,
                   type: "Feature",
-                  geometry: land_geometry
+                  geometry: land_geometry,
                 };
                 return result;
               }, {});
@@ -720,7 +720,7 @@ class Map extends Component {
 
   render() {
     return (
-      <Row className="mt-3 map-container">
+      <Row id="map" className="mt-3 map-container shadow">
         <div ref={this.mapContainer} />
       </Row>
     );

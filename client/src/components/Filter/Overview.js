@@ -39,19 +39,25 @@ function Choice(props) {
           <Container fluid style={{ paddingLeft: 0, paddingRight: 0 }}>
             <Row>
               <Col
+                className="myShadow"
                 p={4}
-                style={{ paddingLeft: 0, paddingRight: 0, marginRight: 4 }}
+                style={{ paddingLeft: 0, paddingRight: 0, marginRight: "15px" }}
               >
                 {["Light"].map((variant) => (
                   <Card
-                    className="text-center"
+                    className="text-center card"
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
                     style={{ height: "120px" }}
                   >
                     <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
-                      <Card.Text>Collisions</Card.Text>
-                      <Card.Title key={content.keys}>
+                      <Card.Text style={{ fontSize: "18px" }}>
+                        Collisions
+                      </Card.Text>
+                      <Card.Title
+                        style={{ fontSize: "24px" }}
+                        key={content.keys}
+                      >
                         +{content.collisions}
                       </Card.Title>
                     </Card.Body>
@@ -59,34 +65,47 @@ function Choice(props) {
                 ))}
               </Col>
               <Col
+                className="myShadow"
                 p={4}
-                style={{ paddingLeft: 0, paddingRight: 0, marginRight: 4 }}
+                style={{ paddingLeft: 0, paddingRight: 0, marginRight: "15px" }}
               >
                 {["Light"].map((variant) => (
                   <Card
-                    className="text-center "
+                    className="text-center card"
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
                     style={{ height: "120px" }}
                   >
                     <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
-                      <Card.Text>Individuals</Card.Text>
-                      <Card.Title>+{content.people}</Card.Title>
+                      <Card.Text style={{ fontSize: "18px" }}>
+                        Individuals
+                      </Card.Text>
+                      <Card.Title style={{ fontSize: "24px" }}>
+                        +{content.people}
+                      </Card.Title>
                     </Card.Body>
                   </Card>
                 ))}
               </Col>
-              <Col p={4} style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <Col
+                className="myShadow"
+                p={4}
+                style={{ paddingLeft: 0, paddingRight: 0 }}
+              >
                 {["Light"].map((variant) => (
                   <Card
-                    className="text-center "
+                    className="text-center card"
                     bg={variant.toLowerCase()}
                     text={variant.toLowerCase() === "light" ? "dark" : "white"}
                     style={{ height: "120px" }}
                   >
                     <Card.Body className="align-items-center d-flex flex-column justify-content-center h-100">
-                      <Card.Text>Vehicles</Card.Text>
-                      <Card.Title>+{content.vehicles}</Card.Title>
+                      <Card.Text style={{ fontSize: "18px" }}>
+                        Vehicles
+                      </Card.Text>
+                      <Card.Title style={{ fontSize: "24px" }}>
+                        +{content.vehicles}
+                      </Card.Title>
                     </Card.Body>
                   </Card>
                 ))}
@@ -107,15 +126,17 @@ function Before(props) {
       <Container fluid style={{ paddingLeft: 0, paddingRight: 0 }}>
         <Row>
           <Col
+            className="myShadow"
             p={4}
             style={{
               paddingLeft: 0,
               paddingRight: 0,
-              marginRight: 4,
+              marginRight: "15px",
             }}
           >
             {["Light"].map((variant) => (
               <Card
+                className="text-center card"
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 style={{ height: "120px" }}
@@ -127,11 +148,13 @@ function Before(props) {
             ))}
           </Col>
           <Col
+            className="myShadow"
             p={4}
-            style={{ paddingLeft: 0, paddingRight: 0, marginRight: 4 }}
+            style={{ paddingLeft: 0, paddingRight: 0, marginRight: "15px" }}
           >
             {["Light"].map((variant) => (
               <Card
+                className="text-center card"
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 style={{ height: "120px" }}
@@ -142,9 +165,14 @@ function Before(props) {
               </Card>
             ))}
           </Col>
-          <Col p={4} style={{ paddingLeft: 0, paddingRight: 0 }}>
+          <Col
+            className="myShadow"
+            p={4}
+            style={{ paddingLeft: 0, paddingRight: 0 }}
+          >
             {["Light"].map((variant) => (
               <Card
+                className="text-center card"
                 bg={variant.toLowerCase()}
                 text={variant.toLowerCase() === "light" ? "dark" : "white"}
                 style={{ height: "120px" }}
